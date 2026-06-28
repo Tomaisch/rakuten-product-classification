@@ -45,44 +45,46 @@ the image**.
 
 ## 4. Pipeline steps
 
-Each phase maps to one script:
+Four phases, each mapped to one script:
 
 | Phase | What it does | Script |
 |---|---|---|
-| **Phase 0** | Download the data (text CSVs + image archive) into `data/` | `src/data/make_dataset.py` |
-| **Phase A** | Descriptive analysis / EDA (16 steps, A1-A16) | `src/features/build_features.py` |
-| **Phase B** | Preprocessing - text B1-B15 in `build_features.py`; image B16-B17 in the benchmark dataloader | `src/features/build_features.py` (+ `benchmark_all_models.py` for image) |
-| **Phase C** | Modeling - 22 steps (18 models + setup + fusion) | `benchmark_all_models.py` |
+| **Phase 0** | Download data (CSVs + image archive) into `data/` | `src/data/make_dataset.py` |
+| **Phase A** | Descriptive analysis / EDA (18 steps) + data checks + statistical tests | `src/features/build_features.py` |
+| **Phase B** | Preprocessing - text + image (22 steps) + step-demo + sanity asserts | `src/features/build_features.py` |
+| **Phase C** | Modeling - build/train all candidate models (26 steps) | `src/models/benchmark_all_models.py` |
+| **Phase D** | Model validation - CV, metrics, interpretability, significance, ablation (16 steps) | `src/models/validate_model.py` |
 
 ### Phase 0 - Download
-1. Download `X_train_update.csv`, `Y_train_CVw08PX.csv`, and `images.zip` (~2.5 GB) into `data/`, unzip images. Script: `make_dataset.py`.
+1. Download `X_train_update.csv`, `Y_train_CVw08PX.csv`, `images.zip` (~2.5 GB) into `data/`; unzip images.
 
-### Phase A - Descriptive analysis (EDA), 16 steps
-1. View the data (first records)
-2. Structure - shape, dtypes, cardinality
-3. Descriptive stats - title/description char-length, word counts
-4. Missing values per column
-5. Missing-description rate by category (MNAR check)
-6. Class distribution + imbalance (13.4:1)
-7. Chi-square goodness-of-fit on class balance
-8. Cumulative imbalance curve
-9. Text-length distribution
-10. Kruskal-Wallis - text length across classes
-11. Language detection + distribution (+ Wilson CIs)
-12. Top tokens / words-by-class
-13. Duplicate analysis
-14. Image inspection - dimensions, white-border / blank-area detection
-15. Target encoding (27 codes -> 0..26)
-16. Decisions taken from the EDA
+### Phase A - Descriptive analysis / EDA (18 steps)
+1. Inspect X and Y SEPARATELY before merge (shape/head/dtypes; `len(X)==len(Y)`; row-key identity assert)
+2. Merge X+Y, fillna, build combined text
+3. View the data (first records)
+4. Structure - `info()`, dtypes, cardinality (`nunique`)
+5. Descriptive stats - char-length, word counts (`describe`, quartiles)
+6. Missing values per column
+7. Missing-description rate by category - MNAR (chi-square contingency + Cramer's V)
+8. Duplicate analysis (exact + text-subset)
+9. Class distribution + imbalance 13.4:1 [figure]
+10. Chi-square goodness-of-fit on class balance
+11. Cumulative imbalance curve [figure]
+12. Text-length distribution [figure]
+13. Kruskal-Wallis - text length across classes
+14. Language detection + distribution + Wilson CIs [figure]
+15. Top tokens / vocabulary size [figure]
+16. Bivariate - median word count per class [figure]
+17. Target encoding (27 codes -> 0..26)
+18. Decisions taken from the EDA
 
-### Phase B - Preprocessing (data cleaning only - NO models here), 17 steps
-
+### Phase B - Preprocessing (22 steps; KEEPS ALL ROWS / LANGUAGES)
 Text:
 1. Merge `designation` + `description` (fillna `''`)
 2. Lowercase
 3. Strip URLs
 4. Strip emails
-5. Strip HTML tags (regex)
+5. Strip HTML tags (BeautifulSoup)
 6. Strip HTML entities (`&eacute;`)
 7. Strip dimensions ("8 x 5")
 8. Strip bare numbers
@@ -93,51 +95,77 @@ Text:
 13. Remove stopwords (FR + EN + DE)
 14. Min word length > 1
 15. Snowball French stemming (classical branch; off for transformers)
-
+16. Step-by-step demo on one real product (raw -> final)
+17. Vocabulary effect (avg tokens before/after cleaning)
 Image:
-16. Corner-threshold crop of the white border
-17. Resize 224x224
+18. Load image by `image_{imageid}_product_{productid}.jpg`
+19. Corner-threshold crop of the white border
+20. Resize 224x224
+21. Data augmentation - flips (train only)
+Sanity:
+22. Preprocessing sanity asserts (no-NaN text, all rows kept, TF-IDF width, KL-divergence train||val, zero train/test ID overlap, LabelEncoder round-trip)
 
-Scripts: `build_features.py` (Phase A descriptive A1-A16 + Phase B text B1-B15). Phase B image steps B16-B17 (corner-crop, resize 224) are applied in `benchmark_all_models.py`'s image dataloader.
-
-### Phase C - Modeling (the models live here - NOT preprocessing), 22 steps
-1. Stratified train/val/test split, seed 42 (fit on train only - no leakage)
-2. Feature engineering - TF-IDF (1,2)-grams, 20k, min_df=3 (classical); raw merged text (transformers); image tensors (image models)
+### Phase C - Modeling: build / train (26 steps)
+1. Feature engineering - TF-IDF (1,2)-grams, 20k, min_df=3 (fit on train only)
+2. Stratified train/val/test split, seed 42 - no leakage (+ shape/width checks)
 3. Imbalance handling - class-weight or SMOTE; rank by macro-F1
-4. Naive Bayes (classical text)
-5. Logistic Regression (classical text)
-6. LinearSVC (classical text)
-7. Decision Tree (classical text)
-8. Random Forest (classical text)
-9. XGBoost (classical text)
-10. KNN - BayesSearchCV + SMOTE (classical text)
-11. XGBoost - BayesSearchCV + SMOTE (classical text)
-12. CamemBERT (transformer text)
-13. FlauBERT (transformer text)
-14. XLM-RoBERTa (transformer text)
-15. mBERT (transformer text)
-16. DistilCamemBERT (transformer text)
-17. EfficientNet-B0 (image)
-18. ResNet50 (image)
-19. EfficientNet-B3 (image)
-20. ConvNeXt-tiny (image)
-21. ViT-small (image)
-22. Fusion - best validation text model + best validation image model, late fusion weight tuned on validation, reported on test
+4. Dimension-reduction comparison - full TF-IDF vs TruncatedSVD-300/1000 vs chi2 SelectKBest-2000/5000 vs mutual-info-2000 vs PCA vs NMF
+5. t-SNE 2-D visualization
+6. Naive Bayes
+7. Logistic Regression
+8. LinearSVC
+9. Decision Tree
+10. Random Forest
+11. XGBoost
+12. KNN - BayesSearchCV + SMOTE (MCC)
+13. XGBoost - BayesSearchCV + SMOTE (MCC)
+14. CamemBERT
+15. FlauBERT
+16. XLM-RoBERTa
+17. mBERT
+18. DistilCamemBERT
+19. EfficientNet-B0
+20. ResNet50
+21. EfficientNet-B3
+22. ConvNeXt-tiny
+23. ViT-small
+24. Image feature extraction (frozen ResNet18, 512-d, L2-normalized)
+25. Multimodal fusion - concat text + image (resize vs autocrop)
+26. Weighted late fusion (weight tuned on validation)
 
-Script: `benchmark_all_models.py`. Per-model justification in `MODEL_SELECTION_JUSTIFICATION.md`.
+### Phase D - Model validation (16 steps)
+1. Model-comparison ranking [figure]
+2. K-fold cross-validation (StratifiedKFold 3) - mean +/- std
+3. Per-class metrics (classification_report)
+4. Confusion matrix [figure] + top confusions
+5. Spearman - class support vs F1
+6. Coefficients per class (inherent interpretability)
+7. SHAP global importance [figure]
+8. SHAP local waterfalls - 3 correct + 1 wrong [figures]
+9. SHAP beeswarm
+10. LIME local check (independent)
+11. Fairness - accuracy per detected language
+12. McNemar significance test (multimodal gain)
+13. Ablation study - remove each step, measure delta macro-F1 [figure]
+14. Imbalance experiments - SMOTE, SMOTE-Tomek, per-class threshold tuning
+15. Debugging sanity checks - majority baseline, shuffle-labels, memorize-tiny, inspect predictions
+16. Literature / SOTA + recommended methods (implemented)
 
-**Phases at a glance:** A = describe the data (16 steps) · B = clean the data (17 steps) · C = model the data (22 steps).
+**Phases at a glance:** 0 = download - A = describe (18) - B = clean (22) - C = build models (26) - D = validate models (16).
 
 ## 5. Repository structure
 
 ```
 notebooks/   exploration + per-member notebooks
 src/
-  models/    text_model.py, image_model.py, fusion_model.py
-  streamlit/ app.py  (defense demo)
-reports/     EDA report + figures + Data-Audit table
-models/       trained model artifacts
-references/   bibliography
+  data/         make_dataset.py        (Phase 0 - download)
+  features/     build_features.py      (Phase A EDA + Phase B preprocessing)
+  models/       benchmark_all_models.py (Phase C - build/train)
+                validate_model.py       (Phase D - validation/interpretability)
+  streamlit/    app.py                  (defense demo)
+reports/        figures/ + result JSONs + Data-Audit table
+models/         trained model artifacts
+references/     bibliography
 ```
 
 ## 6. Models benchmarked (full 84,916-corpus, common RS=42 split, macro-F1)
