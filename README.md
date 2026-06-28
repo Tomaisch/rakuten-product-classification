@@ -189,6 +189,22 @@ All scripts **auto-create** their folders (`data/`, `reports/`, `reports/figures
 - **Phase D** -> `reports/figures/D*.png`, `reports/validation_results.json`
 - **Phase E** -> `reports/rakuten_report.html` (figures embedded, shareable)
 
+### Start from the uploaded checkpoint (skip Phase 0 + A + B)
+This repo ships **`data/df_clean.csv.gz`** - the Phase A+B output (full 84,916 rows, already cleaned/merged/stemmed, with `text`, `text_nostem`, `y`, `prdtypecode`, `designation`, ids). A teammate can continue straight from Phase C without downloading raw data or re-running EDA/preprocessing:
+
+```python
+import pandas as pd
+df = pd.read_csv('data/df_clean.csv.gz')   # pandas reads gzip directly - no manual unzip
+```
+
+Or just run the later scripts (they already load this file):
+```bash
+python src/models/benchmark_all_models.py   # Phase C - reads data/df_clean.csv(.gz)
+python src/models/validate_model.py          # Phase D
+python src/make_report.py                    # Phase E - HTML report
+```
+To rebuild the checkpoint from scratch instead, delete it and run Phase 0 + A + B.
+
 ### Resume from checkpoints (skip expensive stages)
 The pipeline is checkpointed so you can start mid-way without redoing finished work:
 - If `data/df_clean.csv` exists, skip Phase 0+A+B and start at Phase C.
