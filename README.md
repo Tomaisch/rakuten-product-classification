@@ -63,22 +63,37 @@ the image**.
 15. Target encoding (27 codes -> 0..26)
 16. Decisions taken from the EDA
 
-### Phase B - Preprocessing, 23 steps
-**Text (15):** merge title+description -> lowercase -> strip URLs -> strip emails ->
-strip HTML tags (regex) -> strip HTML entities -> strip dimensions ("8 x 5") ->
-strip bare numbers -> strip special chars (keep FR accents) -> collapse whitespace ->
-tokenize (TweetTokenizer) -> **keep all languages** -> remove stopwords (FR+EN+DE) ->
-min word length > 1 -> Snowball French stemming (optional for transformer).
+### Phase B - Preprocessing (data cleaning only - NO models here)
+**Text (B1-B15):** merge title+description -> lowercase -> strip URLs -> strip emails ->
+strip HTML tags (regex) -> strip HTML entities -> strip dimensions ("8 x 5") -> strip bare
+numbers -> strip special chars (keep FR accents) -> collapse whitespace -> tokenize
+(TweetTokenizer) -> **keep all languages** -> remove stopwords (FR+EN+DE) -> min word
+length > 1 -> Snowball French stemming (classical branch; off for transformers).
 
-**Vectorize / split / balance (3):** stratified train/test split with fixed seed (fit on
-train only, no leakage) -> TF-IDF (1,2)-grams, 20k features, min_df=3 -> imbalance
-handling (class-weight / SMOTE).
+**Image (B16-B19):** load by `image_{imageid}_product_{productid}.jpg` -> autocrop white
+borders -> resize 224x224 -> data augmentation (flips, train only).
 
-**Image (5):** load by `image_{imageid}_product_{productid}.jpg` -> autocrop white borders
--> resize 224x224 -> data augmentation (flips) -> feature extraction (EfficientNet-B0 /
-frozen ResNet).
+Output of Phase B = a clean `text` column + clean 224x224 images. Scripts: `make_dataset.py`
+(download), `build_features.py` (descriptive A1-A16 + text preprocessing B1-B15).
 
-**Total: 39 steps** (16 descriptive + 23 preprocessing).
+### Phase C - Modeling (this is where the models live - NOT preprocessing)
+**Feature engineering & split:** TF-IDF (1,2)-grams, 20k, min_df=3 for classical models;
+raw merged text for transformers; CNN/ViT image tensors for image models. Stratified
+train/val/test split (seed 42, fit on train only - no leakage); imbalance via class-weight
+or SMOTE; everything ranked by **macro-F1**.
+
+**Model comparison (18 models)** - full list and per-model justification in
+`MODEL_SELECTION_JUSTIFICATION.md`:
+- *Classical text (8):* Naive Bayes, LogReg, LinearSVC, Decision Tree, Random Forest,
+  XGBoost, KNN (BayesSearchCV+SMOTE), XGBoost (BayesSearchCV+SMOTE)
+- *Transformer text (5):* CamemBERT, FlauBERT, XLM-RoBERTa, mBERT, DistilCamemBERT
+- *Image (5):* EfficientNet-B0, ResNet50, EfficientNet-B3, ConvNeXt-tiny, ViT-small
+
+**Fusion:** best validation text model + best validation image model -> late fusion, weight
+tuned on validation, reported on test. Script: `benchmark_all_models.py`.
+
+**Phases at a glance:** A = describe the data (16 steps) · B = clean the data (19 steps) ·
+C = model the data (18 models + fusion).
 
 ## 5. Repository structure
 
