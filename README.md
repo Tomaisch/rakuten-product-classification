@@ -90,20 +90,41 @@ Image:
 
 Scripts: `make_dataset.py` (download), `build_features.py` (descriptive A1-A16 + text B1-B15).
 
-### Phase C - Modeling (the models live here - NOT preprocessing), 18 models
+### Phase C - Modeling (the models live here - NOT preprocessing)
 
-Feature engineering, split and balance:
-1. Feature engineering - TF-IDF (1,2)-grams, 20k, min_df=3 (classical); raw text (transformers); image tensors (image models)
+Setup:
+1. Feature engineering - TF-IDF (1,2)-grams, 20k, min_df=3 (classical); raw merged text (transformers); image tensors (image models)
 2. Stratified train/val/test split, seed 42 (fit on train only - no leakage)
-3. Imbalance handling - class-weight or SMOTE; everything ranked by macro-F1
+3. Imbalance handling - class-weight or SMOTE; rank by macro-F1
 
-Model comparison (18 models; per-model justification in `MODEL_SELECTION_JUSTIFICATION.md`):
-4. Classical text (8): Naive Bayes, LogReg, LinearSVC, Decision Tree, Random Forest, XGBoost, KNN (BayesSearchCV+SMOTE), XGBoost (BayesSearchCV+SMOTE)
-5. Transformer text (5): CamemBERT, FlauBERT, XLM-RoBERTa, mBERT, DistilCamemBERT
-6. Image (5): EfficientNet-B0, ResNet50, EfficientNet-B3, ConvNeXt-tiny, ViT-small
-7. Fusion - best validation text model + best validation image model, late fusion weight tuned on validation, reported on test
+Classical text models (on TF-IDF):
+4. Naive Bayes
+5. Logistic Regression
+6. LinearSVC
+7. Decision Tree
+8. Random Forest
+9. XGBoost
+10. KNN (BayesSearchCV + SMOTE)
+11. XGBoost (BayesSearchCV + SMOTE)
 
-Script: `benchmark_all_models.py`.
+Transformer text models (fine-tuned):
+12. CamemBERT
+13. FlauBERT
+14. XLM-RoBERTa
+15. mBERT
+16. DistilCamemBERT
+
+Image models (fine-tuned):
+17. EfficientNet-B0
+18. ResNet50
+19. EfficientNet-B3
+20. ConvNeXt-tiny
+21. ViT-small
+
+Fusion:
+22. Best validation text model + best validation image model -> late fusion, weight tuned on validation, reported on test
+
+Script: `benchmark_all_models.py`. Per-model justification in `MODEL_SELECTION_JUSTIFICATION.md`.
 
 **Phases at a glance:** A = describe the data (16 steps) · B = clean the data (19 steps) · C = model the data (18 models + fusion).
 
