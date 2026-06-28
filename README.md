@@ -95,10 +95,7 @@ references/   bibliography
 
 | Model | macro-F1 | Accuracy |
 |---|---|---|
-| TF-IDF + LinearSVC (text) | 0.788 | 0.800 |
-| Image-only (EfficientNet / ResNet, autocrop) | 0.463 | - |
-| **Multimodal concat (text + image)** | **0.813** | - |
-| **CamemBERT fine-tuned (text)** | **0.849** (v2 0.868) | 0.872 |
-
-*All numbers trace to `rakuten_pipeline_final_FULL.json`, `rakuten_multimodal_FULL_results.json`,
-and the CamemBERT run.*
+| TF-IDF + LinearSVC (text) |  |  |
+| Image-only (EfficientNet / ResNet, autocrop) |  |  |
+| **Multimodal concat (text + image)** |  |  |
+| **CamemBERT fine-tuned (text)** |  |  |
