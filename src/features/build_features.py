@@ -199,7 +199,7 @@ print(f'avg tokens: raw {before:.1f} -> cleaned+stemmed {after:.1f}')
 assert df['text'].notna().all(), 'NaN in cleaned text'
 assert len(df) == 84916, 'rows dropped during preprocessing'
 assert (le.inverse_transform(df['y']) == df['prdtypecode'].values).all(), 'LabelEncoder round-trip failed'
-df[['productid','imageid','designation','prdtypecode','y','text','text_nostem']].to_csv(f'{DATA}/df_clean.csv', index=False)
+df[['productid','imageid','designation','description','prdtypecode','y','text','text_nostem']].to_csv(f'{DATA}/df_clean.csv', index=False)
 print('text preprocessing OK ->', f'{DATA}/df_clean.csv')
 
 # =============================================================================
