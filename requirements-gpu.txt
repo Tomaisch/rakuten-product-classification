@@ -1,0 +1,12 @@
+# === GPU requirements (Phase C transformers C14-C18 + image models C19-C24) ===
+# Install ON TOP OF requirements.txt, on a CUDA machine. Pulls CUDA-12.1 torch wheels.
+#   pip install -r requirements.txt
+#   pip install -r requirements-gpu.txt
+# (Reference env that works: /root/dli_lab_venv -> torch 2.5.1+cu121, RTX 4070, CUDA 12.1)
+--extra-index-url https://download.pytorch.org/whl/cu121
+torch==2.5.1
+torchvision==0.20.1
+transformers>=4.40
+timm>=1.0
+accelerate
+# CPU-only? Skip this file - requirements.txt alone runs Phases 0/A/B, classical C1-C13, and all of Phase D.
