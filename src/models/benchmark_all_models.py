@@ -123,8 +123,9 @@ TRANSFORMERS = {'CamemBERT':'camembert-base','FlauBERT':'flaubert/flaubert_base_
                 'DistilCamemBERT':'cmarkea/distilcamembert-base'}
 try:
     import torch
+    if not torch.cuda.is_available(): raise RuntimeError('no CUDA GPU - transformer fine-tuning needs a GPU; skipping on CPU')
     from transformers import AutoTokenizer, AutoModelForSequenceClassification
-    DEV = 'cuda' if torch.cuda.is_available() else 'cpu'
+    DEV = 'cuda'
     nclass = int(df['y'].nunique())
     for name, hf in TRANSFORMERS.items():
         torch.manual_seed(RS)
@@ -158,8 +159,9 @@ print('image models to fine-tune (run on GPU):', list(IMAGES))
 CACHE = '.tmp/rakuten_cache'; os.makedirs(CACHE, exist_ok=True)
 try:
     import torch
+    if not torch.cuda.is_available(): raise RuntimeError('no CUDA GPU - image CNN/extraction needs a GPU; skipping on CPU')
     from torchvision import models as tvm, transforms
-    DEV = 'cuda' if torch.cuda.is_available() else 'cpu'
+    DEV = 'cuda'
     net = tvm.resnet18(weights=tvm.ResNet18_Weights.IMAGENET1K_V1); net.fc = torch.nn.Identity(); net.eval().to(DEV)
     print('ResNet18 extractor ready (512-d). Stream images -> autocrop -> resize224 -> normalize -> L2; cache .npy to', CACHE)
 except Exception as e:
