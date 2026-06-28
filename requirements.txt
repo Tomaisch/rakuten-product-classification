@@ -16,10 +16,9 @@ lime                   # interpretability (Phase D)
 Pillow                 # image preprocessing (Phase B)
 gdown                  # data download (Phase 0)
 
-# === Optional - GPU phases (transformers C14-C18, image models C19-C23, extraction C24) ===
-# torch
-# torchvision
-# transformers
-# timm
+# === GPU phases (transformers C14-C18, image models C19-C24) ===
+# These need a CUDA build of torch - install separately AFTER this file:
+#   pip install -r requirements-gpu.txt
+# (CPU-only is fine for Phases 0/A/B, classical C1-C13, and Phase D.)
 
 # NLTK corpora needed once:  python -m nltk.downloader stopwords
