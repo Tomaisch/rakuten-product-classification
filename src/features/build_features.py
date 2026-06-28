@@ -204,21 +204,28 @@ print('text preprocessing OK ->', f'{DATA}/df_clean.csv')
 
 # =============================================================================
 # PHASE B - PREPROCESSING, IMAGE (B18-B21) - shown on one image; same steps for all
+# (guarded: runs only if images.zip was downloaded/unzipped into data/images/image_train)
 # =============================================================================
 #%% [B18] load image by image_{imageid}_product_{productid}.jpg
 r = df.iloc[0]
-img = Image.open(f"{DATA}/images/image_train/image_{r['imageid']}_product_{r['productid']}.jpg").convert('RGB')
+_imgpath = f"{DATA}/images/image_train/image_{r['imageid']}_product_{r['productid']}.jpg"
+if os.path.exists(_imgpath):
+    img = Image.open(_imgpath).convert('RGB')
 
-#%% [B19] corner-threshold crop of the white border
-a = np.array(img)
-corner = (a[0,0].mean() + a[0,-1].mean() + a[-1,0].mean() + a[-1,-1].mean()) / 4
-rows, cols, _ = np.where(a < corner*0.85)
-if rows.size:
-    img = img.crop((cols.min(), rows.min(), cols.max(), rows.max()))
+    #%% [B19] corner-threshold crop of the white border
+    a = np.array(img)
+    corner = (a[0,0].mean() + a[0,-1].mean() + a[-1,0].mean() + a[-1,-1].mean()) / 4
+    rows, cols, _ = np.where(a < corner*0.85)
+    if rows.size:
+        img = img.crop((cols.min(), rows.min(), cols.max(), rows.max()))
 
-#%% [B20] resize 224x224
-img = img.resize((224, 224))
+    #%% [B20] resize 224x224
+    img = img.resize((224, 224))
 
-#%% [B21] data augmentation - random horizontal flip (training only)
-if np.random.RandomState(RS).rand() < 0.5:
-    img = img.transpose(Image.FLIP_LEFT_RIGHT)
+    #%% [B21] data augmentation - random horizontal flip (training only)
+    if np.random.RandomState(RS).rand() < 0.5:
+        img = img.transpose(Image.FLIP_LEFT_RIGHT)
+    img.save(f'{FIG}/B19_B20_example_image.png')
+    print('image preprocessing demo saved (B18-B21)')
+else:
+    print('B18-B21 image steps skipped - data/images/image_train not present (download images.zip for image phase)')
