@@ -16,13 +16,13 @@ very unevenly sized.
 
 ## 2. Hypotheses we test
 
-| # | Hypothesis | Verdict from our analysis |
-|---|---|---|
-| H1 | **Text is the dominant signal.** `designation` is always present; `description` is missing for ~35% of products, so **merging the two columns** recovers the missing text. | Confirmed - text-only LinearSVC reaches macro-F1 **0.788**; image-only only **0.463**. |
-| H2 | **The catalog is multilingual** (FR-dominant, ~20% EN/DE/ES/NL/IT tail). **Keeping all languages** (multilingual stopwords, or a transformer) beats dropping non-FR/EN rows, because the held-out test set also contains every language. | Confirmed - dropping rows would make those products unclassifiable at inference. |
-| H3 | **Severe imbalance (13.4:1)** makes accuracy misleading; **macro-F1** is the correct metric and minority classes are the hardest. | Confirmed - e.g. "Books (used)" F1 ~0.47 vs easy classes >0.85. |
-| H4 | **Images add incremental signal** once the white borders are **autocropped**; **text+image fusion** beats text-only. | Confirmed - concat fusion **0.813** > text-only 0.788. |
-| H5 | A **context-aware French transformer (CamemBERT)** beats bag-of-words TF-IDF (captures synonyms, morphology, word order). | Confirmed - fine-tuned CamemBERT **0.849** (v2 0.868) > TF-IDF 0.788. |
+| # | Hypothesis |
+|---|---|
+| H1 | **Text is the dominant signal.** `designation` is always present; `description` is missing for ~35% of products, so **merging the two columns** recovers the missing text. |
+| H2 | **The catalog is multilingual** (FR-dominant, ~20% EN/DE/ES/NL/IT tail). **Keeping all languages** (multilingual stopwords, or a transformer) beats dropping non-FR/EN rows, because the held-out test set also contains every language. |
+| H3 | **Severe imbalance (13.4:1)** makes accuracy misleading; **macro-F1** is the correct metric and minority classes are the hardest. |
+| H4 | **Images add incremental signal** once the white borders are **autocropped**; **text+image fusion** beats text-only. |
+| H5 | A **context-aware French transformer (CamemBERT)** beats bag-of-words TF-IDF (captures synonyms, morphology, word order). |
 
 ## 3. Dataset
 
