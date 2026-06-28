@@ -91,11 +91,23 @@ models/       trained model artifacts
 references/   bibliography
 ```
 
-## 6. Results (full 84,916-corpus, macro-F1)
+## 6. Models benchmarked (full 84,916-corpus, common RS=42 split, macro-F1)
 
-| Model | macro-F1 | Accuracy |
-|---|---|---|
-| TF-IDF + LinearSVC (text) |  |  |
-| Image-only (EfficientNet / ResNet, autocrop) |  |  |
-| **Multimodal concat (text + image)** |  |  |
-| **CamemBERT fine-tuned (text)** |  |  |
+Every model is justified in `MODEL_SELECTION_JUSTIFICATION.md` (each tests a specific hypothesis
+about the data). All trained from scratch, no cache. Results filled in after the benchmark run.
+
+**Text - classical (TF-IDF):** Naive Bayes · Logistic Regression · LinearSVC · Decision Tree ·
+Random Forest · XGBoost · KNN (BayesSearchCV + SMOTE) · XGBoost (BayesSearchCV + SMOTE)
+
+**Text - transformers:** CamemBERT · FlauBERT · XLM-RoBERTa · mBERT · DistilCamemBERT
+
+**Image:** EfficientNet-B0 · ResNet50 · EfficientNet-B3 · ConvNeXt-tiny · ViT-small
+
+**Fusion:** best text + best image, late fusion, weight tuned on validation.
+
+| Family | Best model | macro-F1 | Accuracy |
+|---|---|---|---|
+| Classical text |  |  |  |
+| Transformer text |  |  |  |
+| Image |  |  |  |
+| **Multimodal fusion (best-of-all)** |  |  |  |
