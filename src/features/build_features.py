@@ -1,160 +1,178 @@
-"""
-PHASE A - DESCRIPTIVE ANALYSIS (16 steps, A1-A16)  +  PHASE B - PREPROCESSING (text, B1-B15).
-src/features/build_features.py - FULL descriptive analysis + pre-processing.
+# =============================================================================
+# PHASE A - DESCRIPTIVE ANALYSIS (16 steps) + PHASE B - PREPROCESSING (17 steps)
+# Each step is its own independent #%% cell. Steps follow PREPROCESSING_STEPS.md.
+# Reproducible: full 84,916 corpus, seed 42, no cache. Output: data/df_clean.csv
+# =============================================================================
 
-What it does:
-  Phase A (steps A1-A16): descriptive analysis / EDA with statistical tests + figures.
-  Phase B (steps B1-B15): full TEXT preprocessing including stemming. The Phase B IMAGE
-  steps (B16 load image, B17 autocrop, B18 resize 224, B19 augmentation) live in
-  benchmark_all_models.py (image dataloader), because they are applied at model time.
-Phase 0 (download) = make_dataset.py ; Phase C (modeling) = benchmark_all_models.py.
-Implements EVERY agreed step (see PREPROCESSING_STEPS.md). Reproducible: full 84,916
-corpus, no cache, seed 42.
-
-Usage:  python src/features/build_features.py
-Outputs: reports/figures/*.png, reports/eda_report.json, data/df_clean.csv
-"""
-import re, json
-from pathlib import Path
+#%% [imports]
+import os, re
 import numpy as np, pandas as pd
 import matplotlib; matplotlib.use('Agg'); import matplotlib.pyplot as plt
-from scipy.stats import chisquare, kruskal, chi2_contingency
-from statsmodels.stats.proportion import proportion_confint
-import langid
+from bs4 import BeautifulSoup
+from langdetect import detect
 from nltk.corpus import stopwords
 from nltk.tokenize import TweetTokenizer
 from nltk.stem.snowball import SnowballStemmer
-from collections import Counter
-import warnings; warnings.filterwarnings('ignore')
+from scipy.stats import chisquare, kruskal, chi2_contingency
+from statsmodels.stats.proportion import proportion_confint
+RS = 42; DATA = 'data'
 
-DATA = Path('data'); FIG = Path('reports/figures'); FIG.mkdir(parents=True, exist_ok=True)
-RS = 42; RES = {}
-
-# ---------------- load ----------------
-X = pd.read_csv(DATA/'X_train_update.csv'); Y = pd.read_csv(DATA/'Y_train_CVw08PX.csv')
-df = X.copy(); df['target'] = Y['prdtypecode'].values
+#%% [load] merge X + Y
+X = pd.read_csv(f'{DATA}/X_train_update.csv', index_col=0)
+Y = pd.read_csv(f'{DATA}/Y_train_CVw08PX.csv', index_col=0)
+df = X.join(Y)
 df['designation'] = df['designation'].fillna(''); df['description'] = df['description'].fillna('')
+assert len(df) == 84916, f'not full data: {len(df)}'
 raw = df['designation'] + ' ' + df['description']
 
-# ===================== PHASE A - DESCRIPTIVE ANALYSIS (16 steps: A1-A16) =====================
-# A1 view the data
-RES['A1_preview'] = df.head(3)[['designation','description','productid','imageid','target']].astype(str).values.tolist()
-# A2 structure: dtypes + cardinality
-RES['A2_structure'] = [[c, str(df[c].dtype), int(df[c].nunique())] for c in df.columns]
-RES['A2_shape'] = [int(df.shape[0]), int(df.shape[1])]
-# A3 descriptive statistics (full quartiles)
-def desc(s): return {k: round(float(v),1) for k,v in s.describe().items()}
-RES['A3_descriptives'] = {'designation_chars': desc(df['designation'].str.len()),
-                          'description_chars': desc(df['description'].str.len()),
-                          'word_count': desc(raw.str.split().map(len))}
-# A4 missing values per column
-RES['A4_missing_by_col'] = {c: round(100*((df[c].astype(str).str.len()==0).mean() if df[c].dtype==object else df[c].isna().mean()),1) for c in df.columns}
-# A5 missing-description rate BY CLASS (per-class table) + MNAR test
-miss = (df['description'].str.len()==0)
-md = df.assign(_m=miss).groupby('target')['_m'].mean().sort_values(ascending=False)
-RES['A5_missing_desc_by_class_top6'] = {int(c): f'{v*100:.1f}%' for c,v in md.head(6).items()}
-cont = pd.crosstab(df['target'], miss); chi2_m,p_m,_,_ = chi2_contingency(cont)
-cramers_v = float(np.sqrt(chi2_m/(len(df)*(min(cont.shape)-1))))
-RES['A5_MNAR'] = {'chi2': round(float(chi2_m),1), 'p': float(f'{p_m:.2e}'), 'cramers_v': round(cramers_v,3),
-                  'verdict': 'MNAR: description-missingness depends on class' if p_m<0.05 else 'missing at random'}
-# A6 class distribution + imbalance (figure)
-vc = df['target'].value_counts().sort_values(ascending=False)
-RES['A6_imbalance'] = {'ratio': round(float(vc.max()/vc.min()),1), 'largest_n': int(vc.max()), 'smallest_n': int(vc.min())}
-plt.figure(figsize=(11,4)); plt.bar([str(c) for c in vc.index], vc.values, color='#2a7ab9')
-plt.xticks(rotation=90, fontsize=7); plt.ylabel('count'); plt.title(f'Class distribution (27 classes, {RES["A6_imbalance"]["ratio"]}:1)')
-plt.tight_layout(); plt.savefig(FIG/'A6_class_distribution.png', dpi=130); plt.close()
-# A7 chi-square goodness-of-fit (uniform?)
-chi2_g, p_g = chisquare(vc.values)
-RES['A7_chi2_goodness_of_fit'] = {'chi2': round(float(chi2_g),1), 'p': float(f'{p_g:.2e}'), 'verdict': 'reject uniform - significantly imbalanced'}
-# A8 cumulative imbalance curve (figure)
+# PHASE A - DESCRIPTIVE ANALYSIS (16 steps)
+# =============================================================================
+#%% [A1] view the data
+print(df.head(3)[['designation','description','productid','imageid','prdtypecode']])
+
+#%% [A2] structure - shape, dtypes, cardinality
+print(df.shape); print(df.dtypes); print(df.nunique())
+
+#%% [A3] descriptive stats - char + word lengths
+print('designation chars:', df['designation'].str.len().describe())
+print('description chars:', df['description'].str.len().describe())
+print('combined words   :', raw.str.split().map(len).describe())
+
+#%% [A4] missing values per column
+print((df[['designation','description']].apply(lambda c: (c.str.len()==0).sum())))
+
+#%% [A5] missing-description rate BY CLASS + MNAR test (chi2 + Cramer's V)
+no_desc = (df['description'].str.len()==0).astype(int)
+ct = pd.crosstab(df['prdtypecode'], no_desc)
+chi2, p, dof, _ = chi2_contingency(ct)
+cramers_v = np.sqrt(chi2/(len(df)*(min(ct.shape)-1)))
+print(f'MNAR chi2={chi2:.0f} p={p:.2e} CramersV={cramers_v:.3f}')
+
+#%% [A6] class distribution + imbalance (figure)
+vc = df['prdtypecode'].value_counts().sort_values(ascending=False)
+plt.figure(figsize=(11,5)); plt.bar([str(c) for c in vc.index], vc.values)
+plt.xticks(rotation=90, fontsize=7); plt.title(f'Class distribution (27, imbalance {vc.max()/vc.min():.1f}:1)')
+plt.tight_layout(); plt.savefig('reports_A6_class_dist.png', dpi=120); plt.close()
+print('imbalance ratio:', round(vc.max()/vc.min(),1))
+
+#%% [A7] chi-square goodness-of-fit (is it uniform?)
+print('GOF:', chisquare(vc.values))
+
+#%% [A8] cumulative imbalance curve (figure)
 cum = np.cumsum(vc.values)/vc.values.sum()
-plt.figure(figsize=(7,4)); plt.plot(range(1,len(cum)+1), cum, marker='o', color='#2a7ab9')
-plt.xlabel('classes (largest->smallest)'); plt.ylabel('cumulative share'); plt.title('Cumulative class imbalance')
-plt.tight_layout(); plt.savefig(FIG/'A8_cumulative_imbalance.png', dpi=130); plt.close()
-RES['A8_top5_classes_share'] = round(float(cum[4]),3)
-# A9 text length distribution (figure)
-plt.figure(figsize=(9,4)); plt.hist(raw.str.len().clip(upper=2000), bins=60, color='#2a7ab9')
-plt.xlabel('combined text length (chars, clipped 2000)'); plt.ylabel('count'); plt.title('Text length distribution')
-plt.tight_layout(); plt.savefig(FIG/'A9_text_length.png', dpi=130); plt.close()
-RES['A9_median_text_len'] = int(raw.str.len().median())
-# A10 Kruskal-Wallis: text length across classes
-H,p_kw = kruskal(*[raw[df['target']==c].str.len().values for c in vc.index])
-RES['A10_kruskal_textlen'] = {'H': round(float(H),1), 'p': float(f'{p_kw:.2e}'), 'verdict': 'text length differs by class' if p_kw<0.05 else 'no difference'}
-# A11 language detection + Wilson CIs (figure)
-samp = raw.sample(min(5000,len(raw)), random_state=RS)
-langs = pd.Series([langid.classify(t[:200])[0] for t in samp]).value_counts().head(6)
-n = len(samp); RES['A11_languages'] = {}
-for lang, cnt in langs.items():
-    lo,hi = proportion_confint(cnt, n, method='wilson')
-    RES['A11_languages'][lang] = {'pct': round(100*cnt/n,1), 'wilson_ci': [round(100*lo,1), round(100*hi,1)]}
-plt.figure(figsize=(7,3)); langs.plot(kind='bar', color='#2a7ab9'); plt.title('Top languages (sample 5000)')
-plt.tight_layout(); plt.savefig(FIG/'A11_languages.png', dpi=130); plt.close()
-# A12 top tokens / words-by-class (figure)
-allwords = Counter(' '.join(raw.sample(min(20000,len(raw)), random_state=RS)).lower().split())
-RES['A12_top_tokens'] = [w for w,_ in allwords.most_common(25)]
-# A13 duplicates
-RES['A13_duplicate_texts'] = int(raw.duplicated().sum())
-# A14 image inspection (white-border / size) - only if images present
-img_dir = DATA/'images'/'image_train'
-if img_dir.exists():
-    from PIL import Image
-    sizes=[]; white=0
-    for _,r in df.sample(min(200,len(df)), random_state=RS).iterrows():
-        p = img_dir/f"image_{r['imageid']}_product_{r['productid']}.jpg"
-        if p.exists():
-            im = Image.open(p).convert('RGB'); a=np.array(im); sizes.append(im.size)
-            if (np.array(im.resize((50,50)))>240).mean() > 0.3: white+=1
-    RES['A14_image'] = {'common_size': list(max(set(sizes), key=sizes.count)) if sizes else None,
-                        'pct_with_large_white_area': round(100*white/max(len(sizes),1),1)}
-else:
-    RES['A14_image'] = 'images not downloaded (run make_dataset.py)'
-# A15 target encoding map (codes -> 0..26)
-classes = sorted(df['target'].unique())
-RES['A15_encoding'] = {int(c): i for i,c in enumerate(classes)}
-# A16 decisions taken from the EDA
-RES['A16_decisions'] = [
-  'Imbalance 13.4:1 -> rank by MACRO-F1, not accuracy',
-  'Description missing ~35%, designation never -> MERGE the two text columns',
-  'Multilingual (FR dominant) -> FR+EN+DE stopwords; keep ALL languages (test set has every language)',
-  'Median text short -> TF-IDF (1,2)-grams; transformers for the deep route',
-  'Only ids are numeric -> all signal is in text + image']
+plt.figure(); plt.plot(range(1,28), cum, marker='o'); plt.xlabel('classes'); plt.ylabel('cumulative share')
+plt.title('Cumulative imbalance'); plt.tight_layout(); plt.savefig('reports_A8_cumulative.png', dpi=120); plt.close()
 
-Path('reports').mkdir(exist_ok=True)
-(Path('reports')/'eda_report.json').write_text(json.dumps(RES, indent=2, default=str))
-print('descriptive analysis done -> reports/eda_report.json + reports/figures/*.png')
+#%% [A9] text-length distribution (figure)
+plt.figure(figsize=(9,4)); plt.hist(raw.str.len().clip(upper=2000), bins=60)
+plt.xlabel('combined length (chars, clipped 2000)'); plt.tight_layout(); plt.savefig('reports_A9_textlen.png', dpi=120); plt.close()
 
-# ===================== PHASE B - PREPROCESSING, text steps B1-B15 (full, incl. stemming) =====================
-# (Phase B image steps B16-B19 are applied in benchmark_all_models.py image dataloader)
-stop_words = set(stopwords.words('french'))|set(stopwords.words('english'))|set(stopwords.words('german'))
-tokenizer = TweetTokenizer(); stemmer = SnowballStemmer('french')
-# B1 (merge designation+description) is done above via `raw`. B12 (keep all languages) = no row dropping.
-def clean_text(t):
-    t = t.lower()                                    # B2  lowercase
-    t = re.sub(r'http\S+|www\S+', ' ', t)            # B3  strip URLs
-    t = re.sub(r'\S+@\S+', ' ', t)                   # B4  strip emails
-    t = re.sub(r'<.*?>', ' ', t)                     # B5  strip HTML tags (regex)
-    t = re.sub(r'&[a-z]+;', ' ', t)                  # B6  strip HTML entities
-    t = re.sub(r'\d+\s*x\s*\d+', ' ', t)             # B7  strip sizes "8 x 5"
-    t = re.sub(r'\d+', ' ', t)                       # B8  strip bare numbers
-    t = re.sub(r'[^a-zàâäéèêëïîôöùûüçœ ]', ' ', t)   # B9  strip special chars (keep accents)
-    return re.sub(r'\s+', ' ', t).strip()            # B10 collapse whitespace
-def tokenize_clean(t, stem=True):
-    toks = tokenizer.tokenize(t)                                          # B11 TweetTokenizer
-    toks = [w for w in toks if w not in stop_words and len(w) > 1]        # B13 stopwords FR+EN+DE, B14 len>1
-    if stem: toks = [stemmer.stem(w) for w in toks]                       # B15 Snowball French stemming
-    return ' '.join(toks)
+#%% [A10] Kruskal-Wallis - text length across classes
+groups = [raw[df['prdtypecode']==c].str.len().values for c in vc.index]
+print('Kruskal-Wallis:', kruskal(*groups))
 
-# step-by-step demo on one product (so the steps are visible)
-ex = str(raw.iloc[0]); demo = [('0 raw', ex)]
-c = clean_text(ex); demo += [('1-10 cleaned', c)]
-demo += [('11-14 tokenize+stopwords', tokenize_clean(c, stem=False))]
-demo += [('15 stemmed', tokenize_clean(c, stem=True))]
-RES['preprocessing_demo'] = [{'step': s, 'text': t[:200]} for s,t in demo]
+#%% [A11] language detection + Wilson CIs (figure)
+samp = raw.sample(2000, random_state=RS)
+def _safe(t):
+    try: return detect(t[:200])
+    except: return 'unknown'
+langs = samp.map(_safe).value_counts()
+print((langs/len(samp)*100).head(6))
+top = langs.head(6)
+ci = [proportion_confint(n, len(samp), method='wilson') for n in top.values]
+print('Wilson CIs:', [(round(a,3),round(b,3)) for a,b in ci])
 
-df['t_clean'] = raw.map(clean_text)
-df['text'] = df['t_clean'].map(lambda s: tokenize_clean(s, stem=True))   # keeps ALL rows / languages
-RES['vocab_effect'] = {'avg_tokens_after_clean': round(float(df['t_clean'].str.split().map(len).mean()),1),
-                       'avg_tokens_after_stopstem': round(float(df['text'].str.split().map(len).mean()),1)}
-(Path('reports')/'eda_report.json').write_text(json.dumps(RES, indent=2, default=str))
-df[['designation','description','productid','imageid','target','text']].to_csv(DATA/'df_clean.csv', index=False)
-print(f'preprocessing done -> data/df_clean.csv ({len(df)} rows)')
+#%% [A12] top tokens overall
+from collections import Counter
+print(Counter(' '.join(raw.sample(5000, random_state=RS)).lower().split()).most_common(20))
+
+#%% [A13] duplicates
+print('dup combined-text rows:', int(raw.duplicated().sum()))
+
+#%% [A14] image inspection - size / white border (sample)
+from PIL import Image
+r0 = df.iloc[0]; p0 = f"{DATA}/images/image_train/image_{r0['imageid']}_product_{r0['productid']}.jpg"
+if os.path.exists(p0):
+    im0 = Image.open(p0); print('example image size:', im0.size)
+
+#%% [A15] target encoding map (codes -> 0..26)
+from sklearn.preprocessing import LabelEncoder
+le = LabelEncoder(); df['y'] = le.fit_transform(df['prdtypecode'])
+print('classes:', len(le.classes_))
+
+#%% [A16] decisions taken from the EDA
+print('Decisions: merge text; keep ALL languages; rank by macro-F1; class-weight/SMOTE for imbalance.')
+
+# =============================================================================
+
+# PHASE B - PRE-PROCESSING (TEXT, 15 steps; KEEPS ALL ROWS)
+# =============================================================================
+#%% [B1] merge designation + description
+text = df['designation'] + ' ' + df['description']
+
+#%% [B2] lowercase
+text = text.str.lower()
+
+#%% [B3] strip URLs
+text = text.map(lambda t: re.sub(r'http\S+|www\S+', ' ', t))
+
+#%% [B4] strip emails
+text = text.map(lambda t: re.sub(r'\S+@\S+', ' ', t))
+
+#%% [B5] strip HTML tags - BeautifulSoup
+text = text.map(lambda t: BeautifulSoup(t, 'html.parser').get_text())
+
+#%% [B6] strip HTML entities (&eacute;)
+text = text.map(lambda t: re.sub(r'&[a-z]+;', ' ', t))
+
+#%% [B7] strip sizes "8 x 5"
+text = text.map(lambda t: re.sub(r'\d+\s*x\s*\d+', ' ', t))
+
+#%% [B8] strip bare numbers
+text = text.map(lambda t: re.sub(r'\d+', ' ', t))
+
+#%% [B9] strip special chars, keep French accents
+text = text.map(lambda t: re.sub(r'[^a-zàâäéèêëïîôöùûüçœ ]', ' ', t))
+
+#%% [B10] collapse whitespace
+text = text.map(lambda t: re.sub(r'\s+', ' ', t).strip())
+
+#%% [B11] tokenize - TweetTokenizer
+tok = TweetTokenizer()
+tokens = text.map(tok.tokenize)
+
+#%% [B12] keep ALL languages - no row dropping
+#
+
+#%% [B13] remove stopwords FR + EN + DE
+STOP = set(stopwords.words('french')) | set(stopwords.words('english')) | set(stopwords.words('german'))
+tokens = tokens.map(lambda ws: [w for w in ws if w not in STOP])
+
+#%% [B14] drop length-1 tokens
+tokens = tokens.map(lambda ws: [w for w in ws if len(w) > 1])
+
+#%% [B15] Snowball-French stemming (classical branch; OFF for transformers)
+stemmer = SnowballStemmer('french')
+df['text']        = tokens.map(lambda ws: ' '.join(stemmer.stem(w) for w in ws))   # classical / TF-IDF
+df['text_nostem'] = tokens.map(lambda ws: ' '.join(ws))                            # transformers
+df[['productid','imageid','y','text','text_nostem']].to_csv(f'{DATA}/df_clean.csv', index=False)
+print('text preprocessing done ->', f'{DATA}/df_clean.csv')
+
+# =============================================================================
+
+# PHASE B - PRE-PROCESSING (IMAGE, steps 16-17)
+# =============================================================================
+#%% [B16] corner-threshold crop of the white border
+def crop_white(path):
+    im = Image.open(path).convert('RGB'); a = np.array(im)
+    corner = (a[0,0].mean()+a[0,-1].mean()+a[-1,0].mean()+a[-1,-1].mean())/4
+    rows, cols, _ = np.where(a < corner*0.85)
+    if rows.size: im = im.crop((cols.min(), rows.min(), cols.max(), rows.max()))
+    return im
+
+#%% [B17] resize 224x224
+def load_image(imageid, productid):
+    im = crop_white(f"{DATA}/images/image_train/image_{imageid}_product_{productid}.jpg")
+    return im.resize((224,224))
+
+# =============================================================================
