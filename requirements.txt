@@ -1,0 +1,25 @@
+# === Core (Phases A, B, C-classical, D) ===
+pandas
+numpy
+scipy
+scikit-learn
+statsmodels
+matplotlib
+nltk
+beautifulsoup4
+langdetect
+xgboost
+imbalanced-learn
+scikit-optimize        # BayesSearchCV (Phase C C12/C13)
+shap                   # interpretability (Phase D)
+lime                   # interpretability (Phase D)
+Pillow                 # image preprocessing (Phase B)
+gdown                  # data download (Phase 0)
+
+# === Optional - GPU phases (transformers C14-C18, image models C19-C23, extraction C24) ===
+# torch
+# torchvision
+# transformers
+# timm
+
+# NLTK corpora needed once:  python -m nltk.downloader stopwords
