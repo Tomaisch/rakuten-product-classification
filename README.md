@@ -90,43 +90,33 @@ Image:
 
 Scripts: `make_dataset.py` (download), `build_features.py` (descriptive A1-A16 + text B1-B15).
 
-### Phase C - Modeling (the models live here - NOT preprocessing)
-
-Setup:
+### Phase C - Modeling (the models live here - NOT preprocessing), 22 steps
 1. Feature engineering - TF-IDF (1,2)-grams, 20k, min_df=3 (classical); raw merged text (transformers); image tensors (image models)
 2. Stratified train/val/test split, seed 42 (fit on train only - no leakage)
 3. Imbalance handling - class-weight or SMOTE; rank by macro-F1
-
-Classical text models (on TF-IDF):
-4. Naive Bayes
-5. Logistic Regression
-6. LinearSVC
-7. Decision Tree
-8. Random Forest
-9. XGBoost
-10. KNN (BayesSearchCV + SMOTE)
-11. XGBoost (BayesSearchCV + SMOTE)
-
-Transformer text models (fine-tuned):
-12. CamemBERT
-13. FlauBERT
-14. XLM-RoBERTa
-15. mBERT
-16. DistilCamemBERT
-
-Image models (fine-tuned):
-17. EfficientNet-B0
-18. ResNet50
-19. EfficientNet-B3
-20. ConvNeXt-tiny
-21. ViT-small
-
-Fusion:
-22. Best validation text model + best validation image model -> late fusion, weight tuned on validation, reported on test
+4. Naive Bayes (classical text)
+5. Logistic Regression (classical text)
+6. LinearSVC (classical text)
+7. Decision Tree (classical text)
+8. Random Forest (classical text)
+9. XGBoost (classical text)
+10. KNN - BayesSearchCV + SMOTE (classical text)
+11. XGBoost - BayesSearchCV + SMOTE (classical text)
+12. CamemBERT (transformer text)
+13. FlauBERT (transformer text)
+14. XLM-RoBERTa (transformer text)
+15. mBERT (transformer text)
+16. DistilCamemBERT (transformer text)
+17. EfficientNet-B0 (image)
+18. ResNet50 (image)
+19. EfficientNet-B3 (image)
+20. ConvNeXt-tiny (image)
+21. ViT-small (image)
+22. Fusion - best validation text model + best validation image model, late fusion weight tuned on validation, reported on test
 
 Script: `benchmark_all_models.py`. Per-model justification in `MODEL_SELECTION_JUSTIFICATION.md`.
 
-**Phases at a glance:** A = describe the data (16 steps) · B = clean the data (19 steps) · C = model the data (18 models + fusion).
+**Phases at a glance:** A = describe the data (16 steps) · B = clean the data (19 steps) · C = model the data (22 steps).
 
 ## 5. Repository structure
 
