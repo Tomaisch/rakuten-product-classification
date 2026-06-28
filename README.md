@@ -14,15 +14,17 @@ heavily imbalanced** text+image classification problem. Performance is judged on
 **macro-F1** (every class weighted equally), not accuracy, because the classes are
 very unevenly sized.
 
-## 2. Hypotheses we test
+## 2. Research questions
 
-| # | Hypothesis | Verdict from our analysis |
+Open questions the benchmark answers empirically - no answer is assumed in advance.
+
+| # | Question | Answer (from results) |
 |---|---|---|
-| H1 | **Text is the dominant signal.** `designation` is always present; `description` is missing for ~35% of products, so **merging the two columns** recovers the missing text. |  |
-| H2 | **The catalog is multilingual** (FR-dominant, ~20% EN/DE/ES/NL/IT tail). **Keeping all languages** (multilingual stopwords, or a transformer) beats dropping non-FR/EN rows, because the held-out test set also contains every language. |  |
-| H3 | **Severe imbalance (13.4:1)** makes accuracy misleading; **macro-F1** is the correct metric and minority classes are the hardest. |  |
-| H4 | **Images add incremental signal** once the white borders are **autocropped**; **text+image fusion** beats text-only. |  |
-| H5 | A **context-aware French transformer (CamemBERT)** beats bag-of-words TF-IDF (captures synonyms, morphology, word order). |  |
+| Q1 | Is **text or image** the stronger signal, and does **text+image fusion** beat the best single modality? |  |
+| Q2 | Among **classical text models** (NB, LogReg, LinearSVC, trees, XGBoost, KNN), which fits sparse TF-IDF best? |  |
+| Q3 | Among **transformers**, does a **French specialist (CamemBERT/FlauBERT)** beat a **multilingual model (XLM-RoBERTa/mBERT)** given the ~20% non-French tail? |  |
+| Q4 | Among **image backbones** (EfficientNet-B0/B3, ResNet50, ConvNeXt, ViT), which inductive bias fits product photos best? |  |
+| Q5 | Does **keeping all languages** beat dropping non-FR/EN rows, and does **SMOTE** beat class-weighting for the 13.4:1 imbalance (ranked by **macro-F1**)? |  |
 
 ## 3. Dataset
 
