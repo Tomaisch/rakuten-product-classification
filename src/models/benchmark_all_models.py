@@ -4,6 +4,43 @@
 # Input: data/df_clean.csv (from build_features.py). Saves: reports/benchmark_results.json,
 # image-feature caches, and figures (C4 dim-reduction, C5 t-SNE) -> reports/figures/.
 # Phase D (validate_model.py) consumes the split + these results.
+#
+# -----------------------------------------------------------------------------
+# HARDWARE / HOW TO SWITCH CPU <-> GPU
+# -----------------------------------------------------------------------------
+#  - Classical models (C1-C13) are CPU-only (scikit-learn / xgboost hist). Any python works.
+#  - Transformers (C14-C18) and image CNNs (C19-C24) need a CUDA GPU. They auto-detect via
+#    torch.cuda.is_available(): if a GPU is present they run on it (.to('cuda'), VRAM freed
+#    with torch.cuda.empty_cache() between models); if NOT, they SKIP cleanly (no CPU fine-tune,
+#    which would take days).
+#  - To RUN the GPU phases:  use a CUDA-enabled python, e.g.
+#        /root/dli_lab_venv/bin/python benchmark_all_models.py      # torch 2.5.1+cu121, sees RTX 4070
+#    To run CPU-only (classical + skip GPU phases):  any python with cpu torch, e.g.
+#        python3 benchmark_all_models.py
+#  - Resume/checkpoint: re-running skips models already in reports/benchmark_results.json, so you
+#    can run classical on CPU first, then re-run on the GPU env to add the transformers.
+#
+# -----------------------------------------------------------------------------
+# EXPECTED RUNTIME PER STEP  (full 84,916 corpus; CPU = ~12-core, GPU = RTX 4070 Laptop 8GB)
+# -----------------------------------------------------------------------------
+#  C1  split ............................ <5 s        (CPU)
+#  C2  TF-IDF (20k, 1-2gram) ............. ~15 s       (CPU)
+#  C3  SVD-300 + SMOTE .................. ~1-2 min     (CPU)
+#  C4  dim-reduction comparison ......... ~30-60 min   (CPU) <- mutual_info + NMF on 84k x 20k = the slow one
+#  C5  t-SNE (3000-sample) .............. ~1-2 min     (CPU)
+#  C6  NaiveBayes ....................... ~5 s         (CPU)
+#  C7  LogReg ........................... ~30-60 s     (CPU)
+#  C8  LinearSVC ........................ ~30 s        (CPU)
+#  C9  DecisionTree ..................... ~30 s        (CPU)
+#  C10 RandomForest (300 trees) ......... ~2-4 min     (CPU)
+#  C11 XGBoost (400 trees) .............. ~2-5 min     (CPU)
+#  C12 KNN  BayesSearchCV (50 iters) .... ~30-60 min   (CPU) <- slow: KNN predict on SMOTE 62k x 300
+#  C13 XGB  BayesSearchCV (50 iters) .... ~30-60 min   (CPU)
+#  C14-C18 transformers (5x, 3 epochs) .. GPU ~30-60 min EACH (~2.5-5 h total) | CPU = impractical (days) -> skipped
+#  C19-C23 image CNNs (5x, 8 epochs) .... GPU ~30-90 min EACH | needs data/images (images.zip) | CPU impractical -> skipped
+#  C24 image feature extraction ......... GPU ~10-20 min | CPU ~hours
+#  C25-C26 fusion ....................... ~1-2 min     (CPU, once image feats cached)
+#  => Classical-only (CPU): ~2-3 h.  + Transformers (GPU): +2.5-5 h.  + Image (GPU+images): +3-6 h.
 # =============================================================================
 
 #%% [imports + load clean data]
