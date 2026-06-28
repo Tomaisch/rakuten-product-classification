@@ -51,7 +51,7 @@ Each phase maps to one script:
 |---|---|---|
 | **Phase 0** | Download the data (text CSVs + image archive) into `data/` | `src/data/make_dataset.py` |
 | **Phase A** | Descriptive analysis / EDA (16 steps, A1-A16) | `src/features/build_features.py` |
-| **Phase B** | Preprocessing - text B1-B15 in `build_features.py`; image B16-B19 in the benchmark dataloader | `src/features/build_features.py` (+ `benchmark_all_models.py` for image) |
+| **Phase B** | Preprocessing - text B1-B15 in `build_features.py`; image B16-B17 in the benchmark dataloader | `src/features/build_features.py` (+ `benchmark_all_models.py` for image) |
 | **Phase C** | Modeling - 22 steps (18 models + setup + fusion) | `benchmark_all_models.py` |
 
 ### Phase 0 - Download
@@ -75,7 +75,7 @@ Each phase maps to one script:
 15. Target encoding (27 codes -> 0..26)
 16. Decisions taken from the EDA
 
-### Phase B - Preprocessing (data cleaning only - NO models here), 19 steps
+### Phase B - Preprocessing (data cleaning only - NO models here), 17 steps
 
 Text:
 1. Merge `designation` + `description` (fillna `''`)
@@ -95,16 +95,14 @@ Text:
 15. Snowball French stemming (classical branch; off for transformers)
 
 Image:
-16. Load image by `image_{imageid}_product_{productid}.jpg`
-17. Autocrop white borders
-18. Resize 224x224
-19. Data augmentation - flips (train only)
+16. Corner-threshold crop of the white border
+17. Resize 224x224
 
-Scripts: `build_features.py` (Phase A descriptive A1-A16 + Phase B text B1-B15). Phase B image steps B16-B19 (load/autocrop/resize/augment) are applied in `benchmark_all_models.py`'s image dataloader.
+Scripts: `build_features.py` (Phase A descriptive A1-A16 + Phase B text B1-B15). Phase B image steps B16-B17 (corner-crop, resize 224) are applied in `benchmark_all_models.py`'s image dataloader.
 
 ### Phase C - Modeling (the models live here - NOT preprocessing), 22 steps
-1. Feature engineering - TF-IDF (1,2)-grams, 20k, min_df=3 (classical); raw merged text (transformers); image tensors (image models)
-2. Stratified train/val/test split, seed 42 (fit on train only - no leakage)
+1. Stratified train/val/test split, seed 42 (fit on train only - no leakage)
+2. Feature engineering - TF-IDF (1,2)-grams, 20k, min_df=3 (classical); raw merged text (transformers); image tensors (image models)
 3. Imbalance handling - class-weight or SMOTE; rank by macro-F1
 4. Naive Bayes (classical text)
 5. Logistic Regression (classical text)
@@ -128,7 +126,7 @@ Scripts: `build_features.py` (Phase A descriptive A1-A16 + Phase B text B1-B15).
 
 Script: `benchmark_all_models.py`. Per-model justification in `MODEL_SELECTION_JUSTIFICATION.md`.
 
-**Phases at a glance:** A = describe the data (16 steps) · B = clean the data (19 steps) · C = model the data (22 steps).
+**Phases at a glance:** A = describe the data (16 steps) · B = clean the data (17 steps) · C = model the data (22 steps).
 
 ## 5. Repository structure
 
