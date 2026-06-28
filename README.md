@@ -45,6 +45,18 @@ the image**.
 
 ## 4. Pipeline steps
 
+Each phase maps to one script:
+
+| Phase | What it does | Script |
+|---|---|---|
+| **Phase 0** | Download the data (text CSVs + image archive) into `data/` | `src/data/make_dataset.py` |
+| **Phase A** | Descriptive analysis / EDA (16 steps, A1-A16) | `src/features/build_features.py` |
+| **Phase B** | Preprocessing - text B1-B15 in `build_features.py`; image B16-B19 in the benchmark dataloader | `src/features/build_features.py` (+ `benchmark_all_models.py` for image) |
+| **Phase C** | Modeling - 22 steps (18 models + setup + fusion) | `benchmark_all_models.py` |
+
+### Phase 0 - Download
+1. Download `X_train_update.csv`, `Y_train_CVw08PX.csv`, and `images.zip` (~2.5 GB) into `data/`, unzip images. Script: `make_dataset.py`.
+
 ### Phase A - Descriptive analysis (EDA), 16 steps
 1. View the data (first records)
 2. Structure - shape, dtypes, cardinality
@@ -88,7 +100,7 @@ Image:
 18. Resize 224x224
 19. Data augmentation - flips (train only)
 
-Scripts: `make_dataset.py` (download), `build_features.py` (descriptive A1-A16 + text B1-B15).
+Scripts: `build_features.py` (Phase A descriptive A1-A16 + Phase B text B1-B15). Phase B image steps B16-B19 (load/autocrop/resize/augment) are applied in `benchmark_all_models.py`'s image dataloader.
 
 ### Phase C - Modeling (the models live here - NOT preprocessing), 22 steps
 1. Feature engineering - TF-IDF (1,2)-grams, 20k, min_df=3 (classical); raw merged text (transformers); image tensors (image models)
