@@ -172,7 +172,8 @@ references/     bibliography
 ## 7. How to run (reproducible from scratch)
 
 ```bash
-pip install -r requirements.txt
+pip install -r requirements.txt          # core: Phases 0/A/B, classical C1-C13, Phase D (CPU is fine)
+pip install -r requirements-gpu.txt      # OPTIONAL: GPU phases - transformers C14-C18, image C19-C24 (needs CUDA)
 python src/data/make_dataset.py        # Phase 0: downloads CSVs (+images.zip if RAKUTEN_IMAGES_ZIP_ID set) into data/
 python src/features/build_features.py  # Phase A+B: EDA figures + data/df_clean.csv
 python src/models/benchmark_all_models.py  # Phase C: model zoo + dim-reduction/t-SNE figures + reports/benchmark_results.json
