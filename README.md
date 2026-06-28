@@ -16,13 +16,13 @@ very unevenly sized.
 
 ## 2. Hypotheses we test
 
-| # | Hypothesis |
-|---|---|
-| H1 | **Text is the dominant signal.** `designation` is always present; `description` is missing for ~35% of products, so **merging the two columns** recovers the missing text. |
-| H2 | **The catalog is multilingual** (FR-dominant, ~20% EN/DE/ES/NL/IT tail). **Keeping all languages** (multilingual stopwords, or a transformer) beats dropping non-FR/EN rows, because the held-out test set also contains every language. |
-| H3 | **Severe imbalance (13.4:1)** makes accuracy misleading; **macro-F1** is the correct metric and minority classes are the hardest. |
-| H4 | **Images add incremental signal** once the white borders are **autocropped**; **text+image fusion** beats text-only. |
-| H5 | A **context-aware French transformer (CamemBERT)** beats bag-of-words TF-IDF (captures synonyms, morphology, word order). |
+| # | Hypothesis | Verdict from our analysis |
+|---|---|---|
+| H1 | **Text is the dominant signal.** `designation` is always present; `description` is missing for ~35% of products, so **merging the two columns** recovers the missing text. |  |
+| H2 | **The catalog is multilingual** (FR-dominant, ~20% EN/DE/ES/NL/IT tail). **Keeping all languages** (multilingual stopwords, or a transformer) beats dropping non-FR/EN rows, because the held-out test set also contains every language. |  |
+| H3 | **Severe imbalance (13.4:1)** makes accuracy misleading; **macro-F1** is the correct metric and minority classes are the hardest. |  |
+| H4 | **Images add incremental signal** once the white borders are **autocropped**; **text+image fusion** beats text-only. |  |
+| H5 | A **context-aware French transformer (CamemBERT)** beats bag-of-words TF-IDF (captures synonyms, morphology, word order). |  |
 
 ## 3. Dataset
 
