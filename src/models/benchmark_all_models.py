@@ -14,7 +14,10 @@ from sklearn.metrics import f1_score
 RS = 42; DATA = 'data'; FIG = 'reports/figures'; os.makedirs(FIG, exist_ok=True)
 df = pd.read_csv(f'{DATA}/df_clean.csv')
 df['text'] = df['text'].fillna(''); df['text_nostem'] = df['text_nostem'].fillna('')
-RES = {}
+os.makedirs('reports', exist_ok=True)
+RESF = 'reports/benchmark_results.json'
+RES = json.load(open(RESF)) if os.path.exists(RESF) else {}   # checkpoint: resume, skip done models
+def _ckpt(): json.dump(RES, open(RESF, 'w'), indent=2, default=str)
 def macro_f1(y, pred): return round(float(f1_score(y, pred, average='macro')), 4)
 
 #%% [C1] stratified train/val/test split, seed 42 - no leakage (+ data checks)
@@ -71,26 +74,26 @@ plt.title('t-SNE of TF-IDF (SVD-50 -> t-SNE), colored by class'); plt.tight_layo
 
 #%% [C6] Naive Bayes (floor)
 from sklearn.naive_bayes import MultinomialNB
-RES['NaiveBayes'] = macro_f1(yte, MultinomialNB().fit(Xtr, ytr).predict(Xte)); print('NaiveBayes', RES['NaiveBayes'])
+RES['NaiveBayes'] = macro_f1(yte, MultinomialNB().fit(Xtr, ytr).predict(Xte)); print('NaiveBayes', RES['NaiveBayes']); _ckpt()
 
 #%% [C7] Logistic Regression
-RES['LogReg'] = macro_f1(yte, LogisticRegression(max_iter=1000, class_weight='balanced').fit(Xtr, ytr).predict(Xte)); print('LogReg', RES['LogReg'])
+RES['LogReg'] = macro_f1(yte, LogisticRegression(max_iter=1000, class_weight='balanced').fit(Xtr, ytr).predict(Xte)); print('LogReg', RES['LogReg']); _ckpt()
 
 #%% [C8] LinearSVC
 from sklearn.svm import LinearSVC
-RES['LinearSVC'] = macro_f1(yte, LinearSVC(class_weight='balanced').fit(Xtr, ytr).predict(Xte)); print('LinearSVC', RES['LinearSVC'])
+RES['LinearSVC'] = macro_f1(yte, LinearSVC(class_weight='balanced').fit(Xtr, ytr).predict(Xte)); print('LinearSVC', RES['LinearSVC']); _ckpt()
 
 #%% [C9] Decision Tree
 from sklearn.tree import DecisionTreeClassifier
-RES['DecisionTree'] = macro_f1(yte, DecisionTreeClassifier(max_depth=40, random_state=RS).fit(Dtr, ytr).predict(Dte)); print('DecisionTree', RES['DecisionTree'])
+RES['DecisionTree'] = macro_f1(yte, DecisionTreeClassifier(max_depth=40, random_state=RS).fit(Dtr, ytr).predict(Dte)); print('DecisionTree', RES['DecisionTree']); _ckpt()
 
 #%% [C10] Random Forest
 from sklearn.ensemble import RandomForestClassifier
-RES['RandomForest'] = macro_f1(yte, RandomForestClassifier(n_estimators=300, n_jobs=-1, random_state=RS).fit(Dtr, ytr).predict(Dte)); print('RandomForest', RES['RandomForest'])
+RES['RandomForest'] = macro_f1(yte, RandomForestClassifier(n_estimators=300, n_jobs=-1, random_state=RS).fit(Dtr, ytr).predict(Dte)); print('RandomForest', RES['RandomForest']); _ckpt()
 
 #%% [C11] XGBoost
 import xgboost as xgb
-RES['XGBoost'] = macro_f1(yte, xgb.XGBClassifier(n_estimators=400, max_depth=8, tree_method='hist', n_jobs=-1).fit(Dtr, ytr).predict(Dte)); print('XGBoost', RES['XGBoost'])
+RES['XGBoost'] = macro_f1(yte, xgb.XGBClassifier(n_estimators=400, max_depth=8, tree_method='hist', n_jobs=-1).fit(Dtr, ytr).predict(Dte)); print('XGBoost', RES['XGBoost']); _ckpt()
 
 #%% [C12] KNN - BayesSearchCV + SMOTE, MCC-scored
 from sklearn.neighbors import KNeighborsClassifier
@@ -100,7 +103,9 @@ from skopt.space import Integer, Real, Categorical
 opt = BayesSearchCV(KNeighborsClassifier(),
     {'n_neighbors':Integer(1,50),'leaf_size':Integer(10,100),'weights':Categorical(['uniform','distance']),'p':Integer(1,2)},
     n_iter=50, n_jobs=-1, random_state=10, scoring=make_scorer(matthews_corrcoef))
-opt.fit(Dtr_bal, ytr_bal); RES['KNN_BayesSMOTE'] = macro_f1(yte, opt.predict(Dte)); print('KNN(Bayes)', RES['KNN_BayesSMOTE'])
+if 'KNN_BayesSMOTE' not in RES:
+    opt.fit(Dtr_bal, ytr_bal); RES['KNN_BayesSMOTE'] = macro_f1(yte, opt.predict(Dte)); _ckpt()
+print('KNN(Bayes)', RES.get('KNN_BayesSMOTE'))
 
 #%% [C13] XGBoost - BayesSearchCV + SMOTE, MCC-scored
 opt = BayesSearchCV(xgb.XGBClassifier(eval_metric='logloss', n_jobs=-1),
@@ -108,7 +113,9 @@ opt = BayesSearchCV(xgb.XGBClassifier(eval_metric='logloss', n_jobs=-1),
      'subsample':Real(0.5,1.0),'colsample_bytree':Real(0.5,1.0),'gamma':Real(0,5),
      'reg_alpha':Real(1e-8,10,'log-uniform'),'reg_lambda':Real(1e-8,10,'log-uniform')},
     n_iter=50, n_jobs=-1, random_state=10, scoring=make_scorer(matthews_corrcoef))
-opt.fit(Dtr_bal, ytr_bal); RES['XGB_BayesSMOTE'] = macro_f1(yte, opt.predict(Dte)); print('XGB(Bayes)', RES['XGB_BayesSMOTE'])
+if 'XGB_BayesSMOTE' not in RES:
+    opt.fit(Dtr_bal, ytr_bal); RES['XGB_BayesSMOTE'] = macro_f1(yte, opt.predict(Dte)); _ckpt()
+print('XGB(Bayes)', RES.get('XGB_BayesSMOTE'))
 
 #%% [C14-C18] transformer text models (fine-tuned, GPU) - one loop over the 5 transformers
 TRANSFORMERS = {'CamemBERT':'camembert-base','FlauBERT':'flaubert/flaubert_base_cased',
