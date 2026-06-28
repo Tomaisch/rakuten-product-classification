@@ -186,42 +186,97 @@ try:
 except Exception as e:
     print('transformers skipped (no GPU/deps):', e)
 
-#%% [C19-C23] image models (fine-tuned, timm) - the 5 backbones; each uses B19 crop + B20 resize 224
+#%% [C19-C23] image models - fine-tune the 5 timm backbones end-to-end on GPU + image-only macro-F1
+# (GPU only; reads data/images/image_train/; builds a one-time uint8 memmap cache. ~30-90 min/model.)
 IMAGES = {'EfficientNet-B0':'efficientnet_b0','ResNet50':'resnet50','EfficientNet-B3':'efficientnet_b3',
           'ConvNeXt-tiny':'convnext_tiny','ViT-small':'vit_small_patch16_224'}
-print('image models to fine-tune (run on GPU):', list(IMAGES))
-# Full fine-tuning loops run on GPU; each uses the Phase-B B19 corner-crop + B20 resize-224 dataloader.
-
-#%% [C24] image feature extraction - frozen ResNet18 (512-d), L2-normalized (cached)
 CACHE = '.tmp/rakuten_cache'; os.makedirs(CACHE, exist_ok=True)
+img_probs = {}   # display name -> (val_probs_path, test_probs_path) for fusion
 try:
-    import torch
-    if not torch.cuda.is_available(): raise RuntimeError('no CUDA GPU - image CNN/extraction needs a GPU; skipping on CPU')
-    from torchvision import models as tvm, transforms
-    DEV = 'cuda'
-    net = tvm.resnet18(weights=tvm.ResNet18_Weights.IMAGENET1K_V1); net.fc = torch.nn.Identity(); net.eval().to(DEV)
-    print('ResNet18 extractor ready (512-d). Stream images -> autocrop -> resize224 -> normalize -> L2; cache .npy to', CACHE)
+    import torch, torch.nn as nn, timm
+    from torch.amp import autocast, GradScaler
+    from PIL import Image
+    assert torch.cuda.is_available(), 'image phase needs a CUDA GPU - skipping'
+    DEV = 'cuda'; IMG_DIR = f'{DATA}/images/image_train'; N = len(df)
+    nclass = int(df['y'].nunique()); yv = df['y'].values
+    tri, vai, tei = tr.index.values, va.index.values, te.index.values   # positions into df == memmap rows
+    # one-time uint8 memmap cache (resize 224)
+    MM = f'{CACHE}/img_u8_224.mmap'
+    if not os.path.exists(MM):
+        a = np.memmap(MM, dtype=np.uint8, mode='w+', shape=(N,224,224,3))
+        for i, r in enumerate(df.itertuples()):
+            p = f"{IMG_DIR}/image_{r.imageid}_product_{r.productid}.jpg"
+            try: a[i] = np.asarray(Image.open(p).convert('RGB').resize((224,224)), dtype=np.uint8)
+            except Exception: a[i] = 255
+            if i % 10000 == 0: print('  img cache', i, '/', N, flush=True)
+        a.flush(); del a; print('  uint8 image cache built')
+    arr = np.memmap(MM, dtype=np.uint8, mode='r', shape=(N,224,224,3))
+    MEAN = torch.tensor([0.485,0.456,0.406]).view(1,3,1,1).to(DEV); STD = torch.tensor([0.229,0.224,0.225]).view(1,3,1,1).to(DEV)
+    def _gpu(ix, train=False):
+        x = torch.from_numpy(np.ascontiguousarray(arr[ix])).to(DEV).permute(0,3,1,2).float().div_(255)
+        if train and torch.rand(1).item() < 0.5: x = torch.flip(x, [3])
+        return (x - MEAN) / STD
+    def _probs(model, idx, bs=128):
+        model.eval(); P = np.zeros((len(idx), nclass), np.float32); o = np.argsort(idx); s = idx[o]; out = []
+        with torch.no_grad():
+            for i in range(0, len(s), bs):
+                with autocast('cuda', dtype=torch.float16): z = model(_gpu(s[i:i+bs]))
+                out.append(torch.softmax(z.float(), 1).cpu().numpy())
+        P[o] = np.vstack(out); return P
+    BS, EP = 48, 3
+    for disp, arch in IMAGES.items():
+        if disp in RES: print('skip (cached)', disp); img_probs[disp]=arch; continue
+        try:
+            m = timm.create_model(arch, pretrained=True, num_classes=nclass).to(DEV)
+            opt = torch.optim.AdamW(m.parameters(), lr=1e-4, weight_decay=1e-4)
+            sch = torch.optim.lr_scheduler.CosineAnnealingLR(opt, T_max=int(np.ceil(len(tri)/BS))*EP)
+            sca = GradScaler(); lf = nn.CrossEntropyLoss()
+            for ep in range(EP):
+                m.train(); perm = np.random.RandomState(ep).permutation(tri)
+                for bi in range(0, len(perm), BS):
+                    b = np.sort(perm[bi:bi+BS]); xb = _gpu(b, True); yb = torch.tensor(yv[b]).to(DEV)
+                    opt.zero_grad()
+                    with autocast('cuda', dtype=torch.float16): loss = lf(m(xb), yb)
+                    sca.scale(loss).backward(); sca.step(opt); sca.update(); sch.step()
+                print(f'  {disp} epoch {ep+1}/{EP} done', flush=True)
+            np.save(f'{CACHE}/imgval_{arch}.npy', _probs(m, vai))
+            Pte_i = _probs(m, tei); np.save(f'{CACHE}/imgte_{arch}.npy', Pte_i)
+            RES[disp] = round(float(f1_score(yv[tei], Pte_i.argmax(1), average='macro')), 4); _ckpt()
+            img_probs[disp] = arch; print(disp, 'image-only macroF1', RES[disp], flush=True)
+            del m; torch.cuda.empty_cache()
+        except Exception as e:
+            print('FAIL', disp, ':', e); torch.cuda.empty_cache()
 except Exception as e:
-    print('image extraction skipped (no deps):', e)
+    print('image phase skipped (no GPU/deps):', e)
 
-#%% [C25] multimodal fusion - concat text (TF-IDF) + image (ResNet18), resize vs autocrop
-from scipy.sparse import hstack, csr_matrix
-mm = {}
-clf = LogisticRegression(max_iter=1000, solver='lbfgs', class_weight='balanced').fit(Xtr, ytr)
-mm['text_only'] = macro_f1(yte, clf.predict(Xte))
-for mode in ['resize', 'autocrop']:
-    try:
-        def _l2(M): return M/(np.linalg.norm(M, axis=1, keepdims=True)+1e-8)
-        Ftr = _l2(np.load(f'{CACHE}/img_{mode}_train.npy')); Fte = _l2(np.load(f'{CACHE}/img_{mode}_test.npy'))
-        c2 = LogisticRegression(max_iter=1000, solver='lbfgs', class_weight='balanced').fit(hstack([Xtr, csr_matrix(Ftr)]), ytr)
-        mm[f'multimodal_{mode}'] = macro_f1(yte, c2.predict(hstack([Xte, csr_matrix(Fte)])))
-    except Exception as e:
-        mm[f'multimodal_{mode}'] = f'needs cached image feats: {e}'
-RES['multimodal'] = mm; print(mm)
+#%% [C24] image-model comparison ranking (figure)
+img_scores = {k: RES[k] for k in IMAGES if k in RES and isinstance(RES[k], (int, float))}
+if img_scores:
+    od = sorted(img_scores.items(), key=lambda kv: -kv[1])
+    plt.figure(figsize=(7,4)); plt.barh([k for k,_ in od][::-1], [v for _,v in od][::-1])
+    plt.xlabel('image-only test macro-F1'); plt.title('Image models (fine-tuned)'); plt.tight_layout()
+    plt.savefig(f'{FIG}/C24_image_models.png', dpi=120); plt.close(); print('image ranking:', od)
 
-#%% [C26] weighted late fusion - w* tuned on validation (best text proba + best image proba)
-# w* = argmax_w macro_f1(va, w*P_text_val + (1-w)*P_image_val); then report that w on test.
-print('Weighted late fusion: sweep w in [0,1] on validation probabilities, keep best, report on test.')
+#%% [C25-C26] multimodal - weighted late fusion (text LogReg + best image model), w tuned on validation
+try:
+    text_clf = LogisticRegression(max_iter=1000, solver='lbfgs').fit(Xtr, ytr)
+    Pte_text = text_clf.predict_proba(Xte); Pva_text = text_clf.predict_proba(Xva)
+    if img_scores:
+        best_img = max(img_scores, key=img_scores.get); arch = IMAGES[best_img]
+        Pva_img = np.load(f'{CACHE}/imgval_{arch}.npy'); Pte_img = np.load(f'{CACHE}/imgte_{arch}.npy')
+        bw, bf = 0.0, -1
+        for w in np.linspace(0, 1, 11):
+            f = f1_score(yva, text_clf.classes_[((1-w)*Pva_text + w*Pva_img).argmax(1)], average='macro')
+            if f > bf: bf, bw = f, w
+        p = text_clf.classes_[((1-bw)*Pte_text + bw*Pte_img).argmax(1)]
+        RES['multimodal'] = {'text_only': macro_f1(yte, Pte_text.argmax(1)), 'best_image_model': best_img,
+                             'image_only': img_scores[best_img], 'weighted_fusion': macro_f1(yte, p),
+                             'image_weight': round(float(bw), 2)}
+    else:
+        RES['multimodal'] = {'text_only': macro_f1(yte, Pte_text.argmax(1)), 'note': 'no image models trained (GPU/images needed)'}
+    _ckpt(); print('MULTIMODAL:', RES['multimodal'])
+except Exception as e:
+    print('multimodal fusion skipped:', e)
 
 #%% [save] Phase C results for Phase D
 os.makedirs('reports', exist_ok=True)
