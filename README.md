@@ -133,7 +133,6 @@ Script: `benchmark_all_models.py`. Per-model justification in `MODEL_SELECTION_J
 ```
 notebooks/   exploration + per-member notebooks
 src/
-  features/  preprocessing.py  (the shared, common preprocessing - text + image)
   models/    text_model.py, image_model.py, fusion_model.py
   streamlit/ app.py  (defense demo)
 reports/     EDA report + figures + Data-Audit table
