@@ -168,6 +168,35 @@ models/         trained model artifacts
 references/     bibliography
 ```
 
+
+## 7. How to run (reproducible from scratch)
+
+```bash
+pip install -r requirements.txt
+python src/data/make_dataset.py        # Phase 0: downloads CSVs (+images.zip if RAKUTEN_IMAGES_ZIP_ID set) into data/
+python src/features/build_features.py  # Phase A+B: EDA figures + data/df_clean.csv
+python src/models/benchmark_all_models.py  # Phase C: model zoo + dim-reduction/t-SNE figures + reports/benchmark_results.json
+python src/models/validate_model.py    # Phase D: CV/SHAP/LIME/confusion/ablation figures + reports/validation_results.json
+python src/make_report.py              # Phase E: one self-contained reports/rakuten_report.html (all figures + results)
+```
+
+All scripts **auto-create** their folders (`data/`, `reports/`, `reports/figures/`, `reports/logs/`, `.tmp/rakuten_cache/`). Run from the repo root. Every script is also a Jupyter file - the `#%%` markers let you open it and run **step by step**, seeing each step's text output + figure inline.
+
+### Outputs by stage (where files land)
+- **Phase 0** -> `data/X_train_update.csv`, `data/Y_train_CVw08PX.csv` (+ `data/images/` if downloaded)
+- **Phase A/B** -> `reports/figures/A*.png`, `data/df_clean.csv` (the cleaned checkpoint)
+- **Phase C** -> `reports/figures/C4_*.png`, `C5_*.png`, `reports/benchmark_results.json`, image caches in `.tmp/rakuten_cache/*.npy`
+- **Phase D** -> `reports/figures/D*.png`, `reports/validation_results.json`
+- **Phase E** -> `reports/rakuten_report.html` (figures embedded, shareable)
+
+### Resume from checkpoints (skip expensive stages)
+The pipeline is checkpointed so you can start mid-way without redoing finished work:
+- If `data/df_clean.csv` exists, skip Phase 0+A+B and start at Phase C.
+- `benchmark_all_models.py` **resumes**: it loads `reports/benchmark_results.json` and skips any model already computed (re-running continues the slow BayesSearch / image / transformer models where it left off). Delete the JSON to force a full rebuild.
+- Image features cache to `.tmp/rakuten_cache/*.npy` and are reused if present.
+- GPU phases (transformers C14-C18, image models C19-C23, image extraction C24) **skip gracefully** if `torch`/GPU is absent, so the text pipeline runs on CPU alone.
+
+
 ## 6. Models benchmarked (full 84,916-corpus, common RS=42 split, macro-F1)
 
 Every model is justified in `MODEL_SELECTION_JUSTIFICATION.md` (each tests a specific hypothesis
