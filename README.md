@@ -65,7 +65,7 @@ the image**.
 
 ### Phase B - Preprocessing, 23 steps
 **Text (15):** merge title+description -> lowercase -> strip URLs -> strip emails ->
-strip HTML tags (BeautifulSoup) -> strip HTML entities -> strip dimensions ("8 x 5") ->
+strip HTML tags (regex) -> strip HTML entities -> strip dimensions ("8 x 5") ->
 strip bare numbers -> strip special chars (keep FR accents) -> collapse whitespace ->
 tokenize (TweetTokenizer) -> **keep all languages** -> remove stopwords (FR+EN+DE) ->
 min word length > 1 -> Snowball French stemming (optional for transformer).
