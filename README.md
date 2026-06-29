@@ -257,9 +257,9 @@ The pipeline is checkpointed so you can start mid-way without redoing finished w
 
 *Models marked "not available" were not finalized for this version of the table.*
 
-**Classical text (TF-IDF):** LinearSVC **0.791** | XGBoost 0.758 | LogReg 0.783 | RandomForest 0.740 | NaiveBayes 0.682 | DecisionTree 0.583 | KNN/XGB-Bayes: not available
+**Classical text (TF-IDF):** LinearSVC **0.791** | LogReg 0.783 | XGBoost 0.758 | RandomForest 0.740 | KNN-Bayes 0.695 | NaiveBayes 0.682 | DecisionTree 0.583 | XGB-Bayes: not available
 
-**Transformer text:** CamemBERT **0.831** | mBERT 0.810 | XLM-RoBERTa 0.807 | FlauBERT: not available | DistilCamemBERT: not available
+**Transformer text:** CamemBERT **0.831** | DistilCamemBERT 0.824 | mBERT 0.810 | XLM-RoBERTa 0.807 | FlauBERT: not available
 
 **Image (fine-tuned):** ConvNeXt-tiny **0.702** | ViT-small 0.677 | EfficientNet-B3 0.624 | EfficientNet-B0 0.602 | ResNet50 0.563
 
