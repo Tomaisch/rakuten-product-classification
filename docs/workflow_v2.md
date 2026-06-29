@@ -63,7 +63,7 @@ flowchart LR
     %% ===== FEATURES / SPLIT =====
     subgraph F["4 · Turn text into features & split safely"]
         direction TB
-        f1["Split into train / val / test (stratified, fixed seed,<br/>no leakage; checked with KL + zero ID overlap)"]:::cpu
+        f1["Split into train / test (80/20) (stratified, fixed seed,<br/>no leakage; checked with zero train/test ID overlap)"]:::cpu
         f2["Vectorize text with TF-IDF (1-2 grams, 20k features)"]:::cpu
         f3["Balance the minority classes with SMOTE"]:::cpu
         f4["Compare ways to compress features<br/>(full vs SVD vs chi-square vs mutual-info vs NMF)"]:::cpu
