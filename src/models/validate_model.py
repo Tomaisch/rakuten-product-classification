@@ -17,11 +17,10 @@ from sklearn.metrics import f1_score, accuracy_score, classification_report, con
 RS = 42; DATA = 'data'; FIG = 'reports/figures'; os.makedirs(FIG, exist_ok=True); RES = {}
 def macro_f1(y, p): return round(float(f1_score(y, p, average='macro')), 4)
 df = pd.read_csv(f'{DATA}/df_clean.csv'); df['text'] = df['text'].fillna('')
-tr, te = train_test_split(df, test_size=0.2, stratify=df['y'], random_state=RS)
-tr, va = train_test_split(tr, test_size=0.2, stratify=tr['y'], random_state=RS)
-ytr, yva, yte = tr['y'].values, va['y'].values, te['y'].values
+tr, te = train_test_split(df, test_size=0.2, stratify=df['y'], random_state=RS)   # 2-WAY, no val
+ytr, yte = tr['y'].values, te['y'].values
 vec = TfidfVectorizer(ngram_range=(1,2), max_features=20000, min_df=3, sublinear_tf=True)
-Xtr = vec.fit_transform(tr['text']); Xva = vec.transform(va['text']); Xte = vec.transform(te['text'])
+Xtr = vec.fit_transform(tr['text']); Xte = vec.transform(te['text'])
 names = np.array(vec.get_feature_names_out())
 best = LogisticRegression(max_iter=1000, solver='lbfgs').fit(Xtr, ytr)
 yp = best.predict(Xte); classes = list(best.classes_)
@@ -134,16 +133,16 @@ plt.tight_layout(); plt.savefig(f'{FIG}/D11_fairness.png', dpi=120); plt.close()
 
 #%% [D12] McNemar significance test - text-only vs multimodal (needs cached image feats)
 from statsmodels.stats.contingency_tables import mcnemar
-from scipy.sparse import hstack, csr_matrix
 try:
-    def _l2(M): return M/(np.linalg.norm(M, axis=1, keepdims=True)+1e-8)
-    Ftr = _l2(np.load('.tmp/rakuten_cache/img_autocrop_train.npy')); Fte = _l2(np.load('.tmp/rakuten_cache/img_autocrop_test.npy'))
-    cmix = LogisticRegression(max_iter=1000, solver='lbfgs', class_weight='balanced').fit(hstack([Xtr, csr_matrix(Ftr)]), ytr)
-    yp_mm = cmix.predict(hstack([Xte, csr_matrix(Fte)]))
-    a = (yp == yte); b = (yp_mm == yte)
+    IMAGES={'EfficientNet-B0':'efficientnet_b0','ResNet50':'resnet50','EfficientNet-B3':'efficientnet_b3','ConvNeXt-tiny':'convnext_tiny','ViT-small':'vit_small_patch16_224'}
+    g = json.load(open('reports/gpu_results.json')); mm = g['multimodal']
+    Pt = np.load(f".tmp/rakuten_cache/tr_{mm['best_text']}_te.npy")   # best text-model test probs
+    Pi = np.load(f".tmp/rakuten_cache/img_{IMAGES[mm['best_image']]}_te.npy")  # best image-model test probs
+    yp_text = Pt.argmax(1); yp_mm = (0.5*Pt + 0.5*Pi).argmax(1)       # text-only vs equal-weight fusion
+    a = (yp_text == yte); b = (yp_mm == yte)
     tb = [[int((a & b).sum()), int((a & ~b).sum())], [int((~a & b).sum()), int((~a & ~b).sum())]]
     r = mcnemar(tb, exact=False, correction=True)
-    RES['mcnemar'] = {'statistic': round(float(r.statistic),3), 'p': float(r.pvalue), 'table': tb}; print(RES['mcnemar'])
+    RES['mcnemar'] = {'compares': 'text-only vs equal-weight multimodal fusion', 'statistic': round(float(r.statistic),3), 'p': float(r.pvalue), 'table': tb}; print(RES['mcnemar'])
 except Exception as e:
     print('McNemar needs cached image features (Phase C C24):', e)
 
@@ -167,12 +166,15 @@ svd = TruncatedSVD(n_components=300, random_state=RS); Dtr = svd.fit_transform(X
 base_svd = macro_f1(yte, LogisticRegression(max_iter=1000).fit(Dtr, ytr).predict(Dte))
 Xb, yb = SMOTE(random_state=RS).fit_resample(Dtr, ytr)
 smote_f1 = macro_f1(yte, LogisticRegression(max_iter=1000).fit(Xb, yb).predict(Dte))
-Pva = best.predict_proba(Xva); Pte = best.predict_proba(Xte); thr = np.ones(len(classes))
+# per-class thresholds tuned via 3-fold CV out-of-fold probs INSIDE train (no val, no test-selection)
+from sklearn.model_selection import cross_val_predict
+Poof = cross_val_predict(LogisticRegression(max_iter=1000, solver='lbfgs'), Xtr, ytr, cv=3, method='predict_proba', n_jobs=-1)
+Pte = best.predict_proba(Xte); thr = np.ones(len(classes))
 for k in range(len(classes)):
-    grid = np.linspace(0.1, 0.9, 17); f1k = [f1_score(yva == classes[k], (Pva[:,k] >= t).astype(int), zero_division=0) for t in grid]
+    grid = np.linspace(0.1, 0.9, 17); f1k = [f1_score(ytr == classes[k], (Poof[:,k] >= t).astype(int), zero_division=0) for t in grid]
     thr[k] = grid[int(np.argmax(f1k))]
 tuned = macro_f1(yte, np.array([classes[i] for i in (Pte/thr).argmax(1)]))
-RES['imbalance'] = {'svd_base': base_svd, 'svd_smote': smote_f1, 'threshold_tuned': tuned, 'default': macro_f1(yte, yp)}; print(RES['imbalance'])
+RES['imbalance'] = {'svd_base': base_svd, 'svd_smote': smote_f1, 'threshold_tuned_cv': tuned, 'default': macro_f1(yte, yp)}; print(RES['imbalance'])
 
 #%% [D15] debugging sanity checks - majority baseline, shuffle-labels, memorize-tiny, inspect predictions
 from sklearn.dummy import DummyClassifier
