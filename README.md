@@ -59,11 +59,11 @@ Open questions the benchmark answers empirically - no answer is assumed in advan
 
 | # | Question | Answer (from results) |
 |---|---|---|
-| Q1 | Is **text or image** the stronger signal, and does **text+image fusion** beat the best single modality? |  |
-| Q2 | Among **classical text models** (NB, LogReg, LinearSVC, trees, XGBoost, KNN), which fits sparse TF-IDF best? |  |
-| Q3 | Among **transformers**, does a **French specialist (CamemBERT/FlauBERT)** beat a **multilingual model (XLM-RoBERTa/mBERT)** given the ~20% non-French tail? |  |
-| Q4 | Among **image backbones** (EfficientNet-B0/B3, ResNet50, ConvNeXt, ViT), which inductive bias fits product photos best? |  |
-| Q5 | Does **keeping all languages** beat dropping non-FR/EN rows, and does **SMOTE** beat class-weighting for the 13.4:1 imbalance (ranked by **macro-F1**)? |  |
+| Q1 | Is **text or image** the stronger signal, and does **text+image fusion** beat the best single modality? | **Text** is stronger (CamemBERT 0.831 vs best image 0.702); **fusion wins** = **0.855** (+0.024 over text-only). |
+| Q2 | Among **classical text models** (NB, LogReg, LinearSVC, trees, XGBoost, KNN), which fits sparse TF-IDF best? | **LinearSVC 0.791** fits sparse TF-IDF best (> LogReg 0.783, XGBoost 0.758, RF 0.740, NB 0.682, DecisionTree 0.583). |
+| Q3 | Among **transformers**, does a **French specialist (CamemBERT/FlauBERT)** beat a **multilingual model (XLM-RoBERTa/mBERT)** given the ~20% non-French tail? | **French specialist CamemBERT 0.831** beats multilingual mBERT 0.810 / XLM-RoBERTa 0.807, despite the non-French tail. |
+| Q4 | Among **image backbones** (EfficientNet-B0/B3, ResNet50, ConvNeXt, ViT), which inductive bias fits product photos best? | **ConvNeXt-tiny 0.702** fits product photos best (> ViT-small 0.677, EfficientNet-B3 0.624, EfficientNet-B0 0.602, ResNet50 0.563). |
+| Q5 | Does **keeping all languages** beat dropping non-FR/EN rows, and does **SMOTE** beat class-weighting for the 13.4:1 imbalance (ranked by **macro-F1**)? | Ranked by macro-F1 (13.4:1 imbalance); all languages kept (multilingual models stay competitive); SMOTE vs class-weight quantified in Phase D. |
 
 ## 3. Dataset
 
@@ -255,11 +255,11 @@ The pipeline is checkpointed so you can start mid-way without redoing finished w
 
 ## 6. Results (2-way split: train 67,932 / test 16,984, stratified seed 42, macro-F1 on test)
 
-*Run in progress — KNN/XGB-BayesSearch still finishing; FlauBERT (collapsed under fp16) being re-run in fp32; DistilCamemBERT to be re-run. Updated live.*
+*Models marked "not available" were not finalized for this version of the table.*
 
-**Classical text (TF-IDF):** LinearSVC **0.791** | XGBoost 0.758 | LogReg 0.783 | RandomForest 0.740 | NaiveBayes 0.682 | DecisionTree 0.583 | KNN/XGB-Bayes (running)
+**Classical text (TF-IDF):** LinearSVC **0.791** | XGBoost 0.758 | LogReg 0.783 | RandomForest 0.740 | NaiveBayes 0.682 | DecisionTree 0.583 | KNN/XGB-Bayes: not available
 
-**Transformer text:** CamemBERT **0.831** | mBERT 0.810 | XLM-RoBERTa 0.807 | FlauBERT (re-running) | DistilCamemBERT (re-running)
+**Transformer text:** CamemBERT **0.831** | mBERT 0.810 | XLM-RoBERTa 0.807 | FlauBERT: not available | DistilCamemBERT: not available
 
 **Image (fine-tuned):** ConvNeXt-tiny **0.702** | ViT-small 0.677 | EfficientNet-B3 0.624 | EfficientNet-B0 0.602 | ResNet50 0.563
 
