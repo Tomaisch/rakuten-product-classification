@@ -253,23 +253,23 @@ The pipeline is checkpointed so you can start mid-way without redoing finished w
 - GPU phases (transformers C14-C18, image models C19-C23, image extraction C24) **skip gracefully** if `torch`/GPU is absent, so the text pipeline runs on CPU alone.
 
 
-## 6. Models benchmarked (full 84,916-corpus, common RS=42 split, macro-F1)
+## 6. Results (2-way split: train 67,932 / test 16,984, stratified seed 42, macro-F1 on test)
 
-Every model is justified in `MODEL_SELECTION_JUSTIFICATION.md` (each tests a specific hypothesis
-about the data). All trained from scratch, no cache. Results filled in after the benchmark run.
+*Run in progress — KNN/XGB-BayesSearch still finishing; FlauBERT (collapsed under fp16) being re-run in fp32; DistilCamemBERT to be re-run. Updated live.*
 
-**Text - classical (TF-IDF):** Naive Bayes · Logistic Regression · LinearSVC · Decision Tree ·
-Random Forest · XGBoost · KNN (BayesSearchCV + SMOTE) · XGBoost (BayesSearchCV + SMOTE)
+**Classical text (TF-IDF):** LinearSVC **0.791** | XGBoost 0.758 | LogReg 0.783 | RandomForest 0.740 | NaiveBayes 0.682 | DecisionTree 0.583 | KNN/XGB-Bayes (running)
 
-**Text - transformers:** CamemBERT · FlauBERT · XLM-RoBERTa · mBERT · DistilCamemBERT
+**Transformer text:** CamemBERT **0.831** | mBERT 0.810 | XLM-RoBERTa 0.807 | FlauBERT (re-running) | DistilCamemBERT (re-running)
 
-**Image:** EfficientNet-B0 · ResNet50 · EfficientNet-B3 · ConvNeXt-tiny · ViT-small
+**Image (fine-tuned):** ConvNeXt-tiny **0.702** | ViT-small 0.677 | EfficientNet-B3 0.624 | EfficientNet-B0 0.602 | ResNet50 0.563
 
-**Fusion:** best text + best image, late fusion, weight tuned on validation.
+**Multimodal:** CamemBERT + ConvNeXt-tiny, equal-weight late fusion = **0.855**
 
-| Family | Best model | macro-F1 | Accuracy |
-|---|---|---|---|
-| Classical text |  |  |  |
-| Transformer text |  |  |  |
-| Image |  |  |  |
-| **Multimodal fusion (best-of-all)** |  |  |  |
+| Family | Best model | macro-F1 |
+|---|---|---|
+| Classical text | LinearSVC | 0.791 |
+| Transformer text | CamemBERT | 0.831 |
+| Image | ConvNeXt-tiny | 0.702 |
+| **Multimodal fusion (best-of-all)** | **CamemBERT + ConvNeXt-tiny** | **0.855** |
+
+Figures in `reports/figures/`: EDA (A7-A16), C4 dim-reduction, C5 t-SNE, C24 image models, D3-D13 (validation / SHAP / confusion / ablation).
