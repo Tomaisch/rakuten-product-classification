@@ -1,7 +1,7 @@
 # Rakuten 27-class Product Classification — Methodology Workflow
 
 ```mermaid
-flowchart TD
+flowchart LR
     classDef p0 fill:#cfe8ff,stroke:#1e6fd9,color:#0a2a4a,font-weight:bold;
     classDef eda fill:#d6f5d6,stroke:#2e9e2e,color:#0a3a0a;
     classDef prep fill:#ffe6cc,stroke:#e07b00,color:#5a2e00;
