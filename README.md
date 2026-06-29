@@ -8,7 +8,7 @@ bootcamp project, Rakuten challenge (`challengedata.ens.fr`).
 
 ## Workflow at a glance
 
-*(horizontal — scroll right to follow the pipeline; full versions in [docs/workflow_v1.md](docs/workflow_v1.md) top-down and [docs/workflow_v2.md](docs/workflow_v2.md))*
+*(horizontal — scroll right to follow the pipeline; detailed version in [docs/workflow_v1.md](docs/workflow_v1.md))*
 
 ```mermaid
 flowchart LR
