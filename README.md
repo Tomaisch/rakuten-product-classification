@@ -103,11 +103,11 @@ Image:
 20. Resize 224x224
 21. Data augmentation - flips (train only)
 Sanity:
-22. Preprocessing sanity asserts (no-NaN text, all rows kept, TF-IDF width, KL-divergence train||val, zero train/test ID overlap, LabelEncoder round-trip)
+22. Preprocessing sanity asserts (no-NaN text, all rows kept, TF-IDF width, train/test ID-overlap, zero train/test ID overlap, LabelEncoder round-trip)
 
 ### Phase C - Modeling: build / train (26 steps)
 1. Feature engineering - TF-IDF (1,2)-grams, 20k, min_df=3 (fit on train only)
-2. Stratified train/val/test split, seed 42 - no leakage (+ shape/width checks)
+2. Stratified train/test split (80/20), seed 42 - no leakage (+ shape/width checks)
 3. Imbalance handling - class-weight or SMOTE; rank by macro-F1
 4. Dimension-reduction comparison - full TF-IDF vs TruncatedSVD-300/1000 vs chi2 SelectKBest-2000/5000 vs mutual-info-2000 vs PCA vs NMF
 5. t-SNE 2-D visualization
