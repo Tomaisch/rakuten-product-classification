@@ -1,0 +1,100 @@
+{
+  "NaiveBayes": {
+    "accuracy": 0.7239,
+    "macro_f1": 0.6822,
+    "weighted_f1": 0.7106
+  },
+  "LogReg": {
+    "accuracy": 0.7933,
+    "macro_f1": 0.7828,
+    "weighted_f1": 0.7948
+  },
+  "LinearSVC": {
+    "accuracy": 0.8065,
+    "macro_f1": 0.7912,
+    "weighted_f1": 0.8062
+  },
+  "DecisionTree": {
+    "accuracy": 0.6205,
+    "macro_f1": 0.5828,
+    "weighted_f1": 0.6203
+  },
+  "RandomForest": {
+    "accuracy": 0.7585,
+    "macro_f1": 0.7399,
+    "weighted_f1": 0.7574
+  },
+  "XGBoost": {
+    "accuracy": 0.7757,
+    "macro_f1": 0.7582,
+    "weighted_f1": 0.774
+  },
+  "CamemBERT": {
+    "accuracy": 0.8464,
+    "macro_f1": 0.8308,
+    "weighted_f1": 0.845
+  },
+  "FlauBERT": {
+    "accuracy": 0.8328,
+    "macro_f1": 0.8174,
+    "weighted_f1": 0.8314
+  },
+  "XLM-RoBERTa": {
+    "accuracy": 0.8242,
+    "macro_f1": 0.8067,
+    "weighted_f1": 0.824
+  },
+  "mBERT": {
+    "accuracy": 0.8293,
+    "macro_f1": 0.8102,
+    "weighted_f1": 0.8275
+  },
+  "DistilCamemBERT": {
+    "accuracy": 0.8372,
+    "macro_f1": 0.8236,
+    "weighted_f1": 0.8373
+  },
+  "EfficientNet-B0": {
+    "accuracy": 0.6451,
+    "macro_f1": 0.6016,
+    "weighted_f1": 0.6387
+  },
+  "ResNet50": {
+    "accuracy": 0.6305,
+    "macro_f1": 0.5629,
+    "weighted_f1": 0.6179
+  },
+  "EfficientNet-B3": {
+    "accuracy": 0.6649,
+    "macro_f1": 0.624,
+    "weighted_f1": 0.661
+  },
+  "ConvNeXt-tiny": {
+    "accuracy": 0.7264,
+    "macro_f1": 0.7015,
+    "weighted_f1": 0.7245
+  },
+  "ViT-small": {
+    "accuracy": 0.7065,
+    "macro_f1": 0.6767,
+    "weighted_f1": 0.7033
+  },
+  "multimodal": {
+    "accuracy": 0.8692,
+    "macro_f1": 0.8552,
+    "weighted_f1": 0.8667,
+    "fusion": "CamemBERT + ConvNeXt-tiny (equal weight)"
+  },
+  "KNN_BayesSMOTE": {
+    "accuracy": null,
+    "macro_f1": 0.6949,
+    "weighted_f1": null,
+    "note": "search-selected test macro-F1; predictions not cached"
+  },
+  "XGB_BayesSMOTE": {
+    "accuracy": 0.7818,
+    "macro_f1": 0.7647,
+    "weighted_f1": 0.7811,
+    "note": "GPU BayesSearch macro-F1; accuracy/weighted-F1 from CPU reproduction of selected params (GPU/CPU hist differ <0.004)"
+  }
+}
