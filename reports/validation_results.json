@@ -1,0 +1,757 @@
+{
+  "cross_validation": {
+    "LogReg": {
+      "mean": 0.7717,
+      "std": 0.003,
+      "folds": [
+        0.7691,
+        0.7701,
+        0.7759
+      ]
+    },
+    "LinearSVC": {
+      "mean": 0.7834,
+      "std": 0.0023,
+      "folds": [
+        0.7804,
+        0.7839,
+        0.7859
+      ]
+    }
+  },
+  "per_class": {
+    "0": {
+      "precision": 0.417,
+      "recall": 0.515,
+      "f1": 0.461,
+      "support": 623
+    },
+    "1": {
+      "precision": 0.732,
+      "recall": 0.631,
+      "f1": 0.678,
+      "support": 502
+    },
+    "2": {
+      "precision": 0.777,
+      "recall": 0.81,
+      "f1": 0.793,
+      "support": 336
+    },
+    "3": {
+      "precision": 0.946,
+      "recall": 0.735,
+      "f1": 0.827,
+      "support": 166
+    },
+    "4": {
+      "precision": 0.778,
+      "recall": 0.768,
+      "f1": 0.773,
+      "support": 534
+    },
+    "5": {
+      "precision": 0.907,
+      "recall": 0.913,
+      "f1": 0.91,
+      "support": 791
+    },
+    "6": {
+      "precision": 0.818,
+      "recall": 0.471,
+      "f1": 0.598,
+      "support": 153
+    },
+    "7": {
+      "precision": 0.687,
+      "recall": 0.636,
+      "f1": 0.66,
+      "support": 974
+    },
+    "8": {
+      "precision": 0.673,
+      "recall": 0.452,
+      "f1": 0.54,
+      "support": 414
+    },
+    "9": {
+      "precision": 0.839,
+      "recall": 0.927,
+      "f1": 0.881,
+      "support": 1009
+    },
+    "10": {
+      "precision": 0.986,
+      "recall": 0.907,
+      "f1": 0.945,
+      "support": 161
+    },
+    "11": {
+      "precision": 0.836,
+      "recall": 0.737,
+      "f1": 0.783,
+      "support": 498
+    },
+    "12": {
+      "precision": 0.807,
+      "recall": 0.782,
+      "f1": 0.795,
+      "support": 648
+    },
+    "13": {
+      "precision": 0.822,
+      "recall": 0.836,
+      "f1": 0.829,
+      "support": 1015
+    },
+    "14": {
+      "precision": 0.888,
+      "recall": 0.918,
+      "f1": 0.902,
+      "support": 861
+    },
+    "15": {
+      "precision": 0.927,
+      "recall": 0.87,
+      "f1": 0.897,
+      "support": 161
+    },
+    "16": {
+      "precision": 0.788,
+      "recall": 0.821,
+      "f1": 0.804,
+      "support": 999
+    },
+    "17": {
+      "precision": 0.907,
+      "recall": 0.77,
+      "f1": 0.833,
+      "support": 165
+    },
+    "18": {
+      "precision": 0.606,
+      "recall": 0.794,
+      "f1": 0.687,
+      "support": 952
+    },
+    "19": {
+      "precision": 0.751,
+      "recall": 0.716,
+      "f1": 0.733,
+      "support": 955
+    },
+    "20": {
+      "precision": 0.802,
+      "recall": 0.729,
+      "f1": 0.764,
+      "support": 284
+    },
+    "21": {
+      "precision": 0.907,
+      "recall": 0.927,
+      "f1": 0.917,
+      "support": 998
+    },
+    "22": {
+      "precision": 0.796,
+      "recall": 0.716,
+      "f1": 0.754,
+      "support": 518
+    },
+    "23": {
+      "precision": 0.953,
+      "recall": 0.978,
+      "f1": 0.966,
+      "support": 2042
+    },
+    "24": {
+      "precision": 0.816,
+      "recall": 0.79,
+      "f1": 0.802,
+      "support": 499
+    },
+    "25": {
+      "precision": 0.759,
+      "recall": 0.661,
+      "f1": 0.707,
+      "support": 552
+    },
+    "26": {
+      "precision": 1.0,
+      "recall": 0.954,
+      "f1": 0.976,
+      "support": 174
+    }
+  },
+  "top_confusions": [
+    [
+      7,
+      9,
+      149
+    ],
+    [
+      19,
+      18,
+      139
+    ],
+    [
+      0,
+      18,
+      124
+    ],
+    [
+      8,
+      7,
+      94
+    ],
+    [
+      18,
+      0,
+      85
+    ],
+    [
+      25,
+      18,
+      79
+    ],
+    [
+      16,
+      13,
+      53
+    ],
+    [
+      13,
+      16,
+      52
+    ]
+  ],
+  "spearman_support_f1": {
+    "rho": 0.079,
+    "p": 0.6939050871408728
+  },
+  "coef_top": {
+    "0": [
+      "tom",
+      "book",
+      "traduit",
+      "guid",
+      "history",
+      "histoir",
+      "introduct",
+      "piano"
+    ],
+    "1": [
+      "magideal",
+      "import",
+      "ensembl complet",
+      "import japon",
+      "version",
+      "edit",
+      "jap",
+      "simulator"
+    ],
+    "2": [
+      "manet",
+      "nintendo",
+      "skylander",
+      "xbox",
+      "gaming",
+      "playstat",
+      "consol",
+      "wii"
+    ],
+    "3": [
+      "consol",
+      "nintendo",
+      "go",
+      "xbox",
+      "jeu",
+      "playstat",
+      "nom marqu",
+      "consol jeu"
+    ],
+    "4": [
+      "figurin",
+      "shirt",
+      "gundam",
+      "magnet",
+      "figur",
+      "pvc",
+      "mug",
+      "pop"
+    ],
+    "5": [
+      "cart",
+      "fr",
+      "vf",
+      "mtg",
+      "vo",
+      "panin",
+      "pokemon",
+      "magic"
+    ],
+    "6": [
+      "heroclix",
+      "warhamm",
+      "miniatur",
+      "figurin",
+      "oop",
+      "masqu",
+      "princ august",
+      "august"
+    ],
+    "7": [
+      "doudou",
+      "peluch",
+      "jouet",
+      "poup",
+      "figurin",
+      "puzzl",
+      "rc",
+      "lego"
+    ],
+    "8": [
+      "jeu",
+      "card",
+      "propos",
+      "gam",
+      "cart",
+      "jouet",
+      "tarot",
+      "jeton"
+    ],
+    "9": [
+      "g\u00e9ner",
+      "dron",
+      "dji",
+      "maquet",
+      "rc",
+      "ho",
+      "voitur",
+      "ixo"
+    ],
+    "10": [
+      "fl\u00e9chet",
+      "billard",
+      "queu",
+      "chausset",
+      "baby foot",
+      "crai",
+      "proced",
+      "harrow"
+    ],
+    "11": [
+      "stream",
+      "trampolin",
+      "p\u00each",
+      "nerf",
+      "balan\u00e7oir",
+      "ballon",
+      "tricycl",
+      "tent"
+    ],
+    "12": [
+      "beb",
+      "pousset",
+      "bavoir",
+      "hochet",
+      "lang",
+      "chicco",
+      "veilleux",
+      "playsho"
+    ],
+    "13": [
+      "sweetheart",
+      "fournitur cuisin",
+      "kitchen suppl",
+      "meubl",
+      "matel",
+      "chais",
+      "cm",
+      "tabl"
+    ],
+    "14": [
+      "coussin",
+      "rideau",
+      "oreil",
+      "tai",
+      "coton",
+      "cm",
+      "imprim",
+      "maniqu"
+    ],
+    "15": [
+      "bio",
+      "sucr",
+      "caf",
+      "capsul",
+      "chocolat",
+      "bonbon",
+      "sachet",
+      "th\u00e9"
+    ],
+    "16": [
+      "d\u00e9cor",
+      "led",
+      "lamp",
+      "cm",
+      "horlog",
+      "lujuik",
+      "decor",
+      "drapeau"
+    ],
+    "17": [
+      "chien",
+      "aquarium",
+      "chat",
+      "cm",
+      "animal",
+      "pet",
+      "dog",
+      "colli"
+    ],
+    "18": [
+      "magazin",
+      "journal",
+      "revu",
+      "parisien",
+      "figaro",
+      "hor ser",
+      "tel",
+      "mond"
+    ],
+    "19": [
+      "lot",
+      "tom",
+      "volum",
+      "livr",
+      "revu",
+      "num\u00e9ros",
+      "lot livr",
+      "interview"
+    ],
+    "20": [
+      "jeux",
+      "jeu",
+      "nintendo",
+      "playstat",
+      "xbox",
+      "consol",
+      "lot",
+      "wii"
+    ],
+    "21": [
+      "stylo",
+      "lindn",
+      "crayon",
+      "mm",
+      "papi",
+      "clairefontain",
+      "encre",
+      "pag"
+    ],
+    "22": [
+      "jardin",
+      "kitchen",
+      "ext\u00e9rieur",
+      "cm",
+      "pot",
+      "aluminium",
+      "dimens",
+      "chais"
+    ],
+    "23": [
+      "piscin",
+      "spa",
+      "saun",
+      "filtr",
+      "intex",
+      "eau",
+      "pomp",
+      "filtrat"
+    ],
+    "24": [
+      "tool",
+      "mm",
+      "outil",
+      "tondeux",
+      "arrosag",
+      "tron\u00e7on",
+      "ad",
+      "aspir"
+    ],
+    "25": [
+      "tom",
+      "auteur",
+      "o\u00f9",
+      "vi",
+      "comment",
+      "ouvrag",
+      "quand",
+      "mort"
+    ],
+    "26": [
+      "jeu t\u00e9l\u00e9charg",
+      "t\u00e9l\u00e9charg",
+      "jeu",
+      "point fort",
+      "window",
+      "fort",
+      "d\u00e9couvr",
+      "requis"
+    ]
+  },
+  "shap_global": [
+    [
+      "cm",
+      0.08673
+    ],
+    [
+      "jeu",
+      0.05262
+    ],
+    [
+      "figurin",
+      0.0297
+    ],
+    [
+      "mm",
+      0.02419
+    ],
+    [
+      "piscin",
+      0.02406
+    ],
+    [
+      "cart",
+      0.02327
+    ],
+    [
+      "lot",
+      0.02064
+    ],
+    [
+      "jeux",
+      0.01991
+    ],
+    [
+      "bois",
+      0.01927
+    ],
+    [
+      "pc",
+      0.01791
+    ],
+    [
+      "couleur",
+      0.01779
+    ],
+    [
+      "taill",
+      0.01603
+    ],
+    [
+      "eau",
+      0.01489
+    ],
+    [
+      "toy",
+      0.01335
+    ],
+    [
+      "utilis",
+      0.01332
+    ],
+    [
+      "blanc",
+      0.0131
+    ],
+    [
+      "noir",
+      0.01259
+    ],
+    [
+      "dimens",
+      0.01251
+    ],
+    [
+      "plus",
+      0.01233
+    ],
+    [
+      "jouet",
+      0.01203
+    ],
+    [
+      "kit",
+      0.01201
+    ],
+    [
+      "haut",
+      0.0119
+    ],
+    [
+      "marqu",
+      0.01184
+    ],
+    [
+      "enfant",
+      0.01183
+    ],
+    [
+      "tabl",
+      0.01157
+    ]
+  ],
+  "lime": [
+    {
+      "i": 0,
+      "pred": 10,
+      "weights": [
+        [
+          "chausset",
+          0.1916
+        ],
+        [
+          "auucn",
+          0.1147
+        ],
+        [
+          "beb",
+          0.0943
+        ],
+        [
+          "longueur",
+          0.0879
+        ],
+        [
+          "fill",
+          0.0845
+        ],
+        [
+          "pair",
+          0.0835
+        ],
+        [
+          "coll",
+          0.0736
+        ],
+        [
+          "coton",
+          0.0731
+        ]
+      ]
+    },
+    {
+      "i": 2,
+      "pred": 23,
+      "weights": [
+        [
+          "piscin",
+          0.1325
+        ],
+        [
+          "robot",
+          0.0543
+        ],
+        [
+          "dolphin",
+          0.0542
+        ],
+        [
+          "eau",
+          0.0513
+        ],
+        [
+          "filtr",
+          0.0275
+        ],
+        [
+          "filtrat",
+          0.0238
+        ],
+        [
+          "bassin",
+          0.019
+        ],
+        [
+          "algu",
+          0.0178
+        ]
+      ]
+    }
+  ],
+  "fairness_by_language": {
+    "fr": 0.823,
+    "en": 0.792,
+    "ca": 0.776,
+    "it": 0.695,
+    "ro": 0.766,
+    "sv": 0.718
+  },
+  "mcnemar": {
+    "compares": "text-only vs equal-weight multimodal fusion",
+    "statistic": 108.519,
+    "p": 2.0690245948280233e-25,
+    "table": [
+      [
+        13883,
+        493
+      ],
+      [
+        880,
+        1728
+      ]
+    ]
+  },
+  "ablation": {
+    "no bigrams (unigram)": 0.0033,
+    "no min_df": 0.0007,
+    "no sublinear_tf": -0.0054,
+    "no 20k cap": 0.0095
+  },
+  "imbalance": {
+    "svd_base": 0.7113,
+    "svd_smote": 0.7109,
+    "threshold_tuned_cv": 0.7868,
+    "default": 0.7858
+  },
+  "sanity": {
+    "majority_baseline_macroF1": 0.008,
+    "shuffled_labels_macroF1": 0.0272,
+    "memorize_tiny_trainacc": 0.766,
+    "sample_predictions": [
+      [
+        10,
+        10
+      ],
+      [
+        13,
+        14
+      ],
+      [
+        23,
+        23
+      ],
+      [
+        5,
+        5
+      ],
+      [
+        19,
+        19
+      ]
+    ]
+  },
+  "literature": {
+    "classical_ceiling": "TF-IDF + LinearSVC ~0.75-0.79 macro-F1",
+    "multimodal": "frozen ResNet18 autocrop fusion ~0.80",
+    "sota": "fine-tuned CamemBERT/FlauBERT ~0.88-0.90 (biggest lever)",
+    "implemented_recs": [
+      "SMOTE",
+      "per-class threshold tuning",
+      "weighted late fusion",
+      "CamemBERT frozen embeddings"
+    ]
+  }
+}
