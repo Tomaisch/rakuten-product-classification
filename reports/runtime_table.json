@@ -1,0 +1,82 @@
+{
+  "CamemBERT": {
+    "device": "RTX 4070 Laptop (GPU, 8GB)",
+    "seconds": 2220,
+    "note": "fine-tuned 3 epochs (incl. data load)"
+  },
+  "FlauBERT": {
+    "device": "RTX 4070 Laptop (GPU, 8GB)",
+    "seconds": 9656,
+    "note": "fp32 4-epoch retry (fixes fp16 collapse; wall-clock partly CPU-contended)"
+  },
+  "XLM-RoBERTa": {
+    "device": "RTX 4070 Laptop (GPU, 8GB)",
+    "seconds": 3120,
+    "note": "fine-tuned 3 epochs"
+  },
+  "mBERT": {
+    "device": "RTX 4070 Laptop (GPU, 8GB)",
+    "seconds": 2640,
+    "note": "fine-tuned 3 epochs"
+  },
+  "EfficientNet-B0": {
+    "device": "RTX 4070 Laptop (GPU, 8GB)",
+    "seconds": 840,
+    "note": "fine-tuned 3 epochs (incl. one-time image cache build)"
+  },
+  "ResNet50": {
+    "device": "RTX 4070 Laptop (GPU, 8GB)",
+    "seconds": 600,
+    "note": "fine-tuned 3 epochs"
+  },
+  "EfficientNet-B3": {
+    "device": "RTX 4070 Laptop (GPU, 8GB)",
+    "seconds": 840,
+    "note": "fine-tuned 3 epochs"
+  },
+  "ConvNeXt-tiny": {
+    "device": "RTX 4070 Laptop (GPU, 8GB)",
+    "seconds": 780,
+    "note": "fine-tuned 3 epochs"
+  },
+  "ViT-small": {
+    "device": "RTX 4070 Laptop (GPU, 8GB)",
+    "seconds": 1140,
+    "note": "fine-tuned 3 epochs"
+  },
+  "NaiveBayes": {
+    "device": "Intel i9-14900HX (CPU, 12-core)",
+    "seconds": 0.1,
+    "note": "fit+predict"
+  },
+  "LogReg": {
+    "device": "Intel i9-14900HX (CPU, 12-core)",
+    "seconds": 24.2,
+    "note": "fit+predict"
+  },
+  "LinearSVC": {
+    "device": "Intel i9-14900HX (CPU, 12-core)",
+    "seconds": 39.5,
+    "note": "fit+predict"
+  },
+  "DecisionTree": {
+    "device": "Intel i9-14900HX (CPU, 12-core)",
+    "seconds": 59.1,
+    "note": "fit+predict"
+  },
+  "RandomForest": {
+    "device": "Intel i9-14900HX (CPU, 12-core)",
+    "seconds": 87.7,
+    "note": "fit+predict"
+  },
+  "XGBoost": {
+    "device": "Intel i9-14900HX (CPU, 12-core)",
+    "seconds": 1927.3,
+    "note": "fit+predict"
+  },
+  "XGB_BayesSMOTE": {
+    "device": "RTX 4070 Laptop (GPU, 8GB)",
+    "seconds": 13834,
+    "note": "BayesSearch 15 iter x 3-fold CV (n_jobs=1)"
+  }
+}
