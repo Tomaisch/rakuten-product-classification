@@ -1,0 +1,19 @@
+{
+  "CamemBERT": 0.8308,
+  "FlauBERT": 0.8174,
+  "XLM-RoBERTa": 0.8067,
+  "mBERT": 0.8102,
+  "EfficientNet-B0": 0.6016,
+  "ResNet50": 0.5629,
+  "EfficientNet-B3": 0.624,
+  "ConvNeXt-tiny": 0.7015,
+  "ViT-small": 0.6767,
+  "multimodal": {
+    "best_text": "CamemBERT",
+    "text_only": 0.8308,
+    "best_image": "ConvNeXt-tiny",
+    "image_only": 0.7015,
+    "equal_weight_fusion": 0.8552
+  },
+  "DistilCamemBERT": 0.8236
+}
