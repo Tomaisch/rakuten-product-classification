@@ -253,23 +253,34 @@ The pipeline is checkpointed so you can start mid-way without redoing finished w
 - GPU phases (transformers C14-C18, image models C19-C23, image extraction C24) **skip gracefully** if `torch`/GPU is absent, so the text pipeline runs on CPU alone.
 
 
-## 6. Results (2-way split: train 67,932 / test 16,984, stratified seed 42, macro-F1 on test)
+## 6. Results — all models ranked (2-way split: train 67,932 / test 16,984, stratified seed 42; test-set scores)
 
-*Models marked "not available" were not finalized for this version of the table.*
+Primary metric = **macro-F1** (each of the 27 classes weighted equally under the 13.4:1 imbalance). Accuracy and weighted-F1 favour the large classes and are shown for completeness.
 
-**Classical text (TF-IDF):** LinearSVC **0.791** | LogReg 0.783 | XGBoost 0.758 | RandomForest 0.740 | KNN-Bayes 0.695 | NaiveBayes 0.682 | DecisionTree 0.583 | XGB-Bayes: not available
+| Rank | Model | Family | Accuracy | Macro-F1 | Weighted-F1 |
+|---|---|---|---|---|---|
+| 1 | **CamemBERT + ConvNeXt fusion** | Multimodal | 0.8692 | **0.8552** | 0.8667 |
+| 2 | CamemBERT | Transformer | 0.8464 | 0.8308 | 0.8450 |
+| 3 | DistilCamemBERT | Transformer | 0.8372 | 0.8236 | 0.8373 |
+| 4 | FlauBERT | Transformer | 0.8328 | 0.8174 | 0.8314 |
+| 5 | mBERT | Transformer | 0.8293 | 0.8102 | 0.8275 |
+| 6 | XLM-RoBERTa | Transformer | 0.8242 | 0.8067 | 0.8240 |
+| 7 | LinearSVC | Classical | 0.8065 | 0.7912 | 0.8062 |
+| 8 | LogReg | Classical | 0.7933 | 0.7828 | 0.7948 |
+| 9 | XGBoost (BayesSearch+SMOTE) | Classical (tuned) | 0.7818 | 0.7647 | 0.7811 |
+| 10 | XGBoost | Classical | 0.7757 | 0.7582 | 0.7740 |
+| 11 | RandomForest | Classical | 0.7585 | 0.7399 | 0.7574 |
+| 12 | ConvNeXt-tiny | Image | 0.7264 | 0.7015 | 0.7245 |
+| 13 | KNN (BayesSearch+SMOTE) | Classical (tuned) | — | 0.6949 | — |
+| 14 | NaiveBayes | Classical | 0.7239 | 0.6822 | 0.7106 |
+| 15 | ViT-small | Image | 0.7065 | 0.6767 | 0.7033 |
+| 16 | EfficientNet-B3 | Image | 0.6649 | 0.6240 | 0.6610 |
+| 17 | EfficientNet-B0 | Image | 0.6451 | 0.6016 | 0.6387 |
+| 18 | DecisionTree | Classical | 0.6205 | 0.5828 | 0.6203 |
+| 19 | ResNet50 | Image | 0.6305 | 0.5629 | 0.6179 |
 
-**Transformer text:** CamemBERT **0.831** | DistilCamemBERT 0.824 | mBERT 0.810 | XLM-RoBERTa 0.807 | FlauBERT: not available
+**Best per family:** Multimodal fusion **0.855** · Transformer CamemBERT **0.831** · Classical LinearSVC **0.791** · Classical-tuned XGBoost-Bayes **0.765** · Image ConvNeXt-tiny **0.702**.
 
-**Image (fine-tuned):** ConvNeXt-tiny **0.702** | ViT-small 0.677 | EfficientNet-B3 0.624 | EfficientNet-B0 0.602 | ResNet50 0.563
+_Notes: XGBoost-Bayes macro-F1 is the GPU BayesSearch result; its accuracy/weighted-F1 are from a CPU reproduction of the selected params (GPU/CPU histogram differ <0.004). KNN-Bayes predictions were not cached, so only its macro-F1 is available. FlauBERT’s fp16 run collapsed (0.004) and was re-run in fp32 → 0.817._
 
-**Multimodal:** CamemBERT + ConvNeXt-tiny, equal-weight late fusion = **0.855**
-
-| Family | Best model | macro-F1 |
-|---|---|---|
-| Classical text | LinearSVC | 0.791 |
-| Transformer text | CamemBERT | 0.831 |
-| Image | ConvNeXt-tiny | 0.702 |
-| **Multimodal fusion (best-of-all)** | **CamemBERT + ConvNeXt-tiny** | **0.855** |
-
-Figures in `reports/figures/`: EDA (A7-A16), C4 dim-reduction, C5 t-SNE, C24 image models, D3-D13 (validation / SHAP / confusion / ablation).
+Figures in `reports/figures/`: **E1** (all-models macro-F1 + accuracy), **E2** (per-model runtime, CPU vs GPU), EDA (A7–A16), C4 dim-reduction, C5 t-SNE, C24 image models, D1 model comparison, D3–D13 (per-class, confusion, SHAP, fairness, ablation). Full interactive report: `reports/rakuten_report.html`.
