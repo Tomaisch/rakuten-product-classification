@@ -36,7 +36,7 @@ print('row keys identical -> safe to join')
 #%% [A2 / B1] merge X+Y, fill missing, build combined text
 df = X.join(Y)
 df['designation'] = df['designation'].fillna(''); df['description'] = df['description'].fillna('')
-assert len(df) == 84916, f'not full data: {len(df)}'
+assert len(df) == 83502, 'unexpected row count after dedup'
 text = df['designation'] + ' ' + df['description']   # B1 merge (single source of truth)
 
 #%% [A3] view the data
@@ -197,9 +197,15 @@ print(f'avg tokens: raw {before:.1f} -> cleaned+stemmed {after:.1f}')
 
 #%% [B22] preprocessing sanity asserts (text-level)
 assert df['text'].notna().all(), 'NaN in cleaned text'
-assert len(df) == 84916, 'rows dropped during preprocessing'
+assert len(df) == 83502, 'unexpected row count after dedup'
 assert (le.inverse_transform(df['y']) == df['prdtypecode'].values).all(), 'LabelEncoder round-trip failed'
-df[['productid','imageid','designation','description','prdtypecode','y','text','text_nostem']].to_csv(f'{DATA}/df_clean.csv', index=False)
+#%% [B22b] missingness + length features, then remove exact duplicates (84,916 -> 83,502)
+df['desc_missing']    = (df['description'].fillna('').astype(str).str.strip() == '').astype(int)
+df['designation_len'] = df['designation'].fillna('').astype(str).str.len()
+df['description_len'] = df['description'].fillna('').astype(str).str.len()
+df = df.drop_duplicates(subset=['designation','description'], keep='first').reset_index(drop=True)
+print('after dedup rows:', len(df))
+df[['productid','imageid','designation','description','prdtypecode','y','text','text_nostem','desc_missing','designation_len','description_len']].to_csv(f'{DATA}/df_clean.csv', index=False)
 print('text preprocessing OK ->', f'{DATA}/df_clean.csv')
 
 # =============================================================================
