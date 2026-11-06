@@ -4,6 +4,39 @@ Classify French e-commerce product listings into **27 product-type codes** (`prd
 from their **text** (title + description) and **product image**. DataScientest / Liora
 bootcamp project, Rakuten challenge (`challengedata.ens.fr`).
 
+## About this repository
+
+This is my public copy of a team project from the Liora / DataScientest bootcamp.
+The original course repository is private. Commits keep their original authors, and
+I merged my branch into `main` so that my notebooks are visible here.
+
+**What I worked on:**
+
+- **Text preprocessing:** a notebook for preparing the product text.
+- **Image model:** an EfficientNet-B0 classifier for the product images.
+- **Multimodal model:** a fusion model combining EfficientNet-B0 image features with
+  XLM-RoBERTa text features.
+
+**How much each input contributed to my fusion model** (weighted F1 on an 80/20
+validation split, mean over 5 seeds):
+
+| Input | Weighted F1 |
+|---|---|
+| Image only | 0.679 |
+| Text only | 0.876 |
+| Image + text | 0.899 |
+
+These results come from `notebooks/2.0-Thomas-Multimodal-Model.ipynb`. They are not
+directly comparable with the results table further down, which comes from the team's
+pipeline and uses test-set scores.
+
+My teammates built the other parts of the project, including the pipeline in `src/`,
+the model benchmark, the validation and the report.
+
+**Removed from this copy:** the cleaned dataset, the PDF papers from `references/`,
+and notebook outputs that showed products from the challenge data. To run the project,
+you need your own copy of the data from the challenge page.
+
 ---
 
 ## Workflow at a glance
@@ -88,7 +121,7 @@ Four phases, each mapped to one script:
 
 | Phase | What it does | Script |
 |---|---|---|
-| **Phase 0** | Download data (CSVs + image archive) into `data/` | `src/data/make_dataset.py` |
+| **Phase 0** | Prepare the data: place the challenge CSVs in `data/`, then unpack the image archive | `src/data/make_dataset.py` |
 | **Phase A** | Descriptive analysis / EDA (18 steps) + data checks + statistical tests | `src/features/build_features.py` |
 | **Phase B** | Preprocessing - text + image (22 steps) + step-demo + sanity asserts | `src/features/build_features.py` |
 | **Phase C** | Modeling - build/train all candidate models (26 steps) | `src/models/benchmark_all_models.py` |
@@ -204,7 +237,6 @@ src/
   streamlit/    app.py                  (defense demo)
 reports/        figures/ + result JSONs + Data-Audit table
 models/         trained model artifacts
-references/     bibliography
 ```
 
 
@@ -213,7 +245,7 @@ references/     bibliography
 ```bash
 pip install -r requirements.txt          # core: Phases 0/A/B, classical C1-C13, Phase D (CPU is fine)
 pip install -r requirements-gpu.txt      # OPTIONAL: GPU phases - transformers C14-C18, image C19-C24 (needs CUDA)
-python src/data/make_dataset.py        # Phase 0: downloads CSVs (+images.zip if RAKUTEN_IMAGES_ZIP_ID set) into data/
+python src/data/make_dataset.py        # Phase 0: first place the challenge CSVs in data/; unpacks data/images.zip if present
 python src/features/build_features.py  # Phase A+B: EDA figures + data/df_clean.csv
 python src/models/benchmark_all_models.py  # Phase C: model zoo + dim-reduction/t-SNE figures + reports/benchmark_results.json
 python src/models/validate_model.py    # Phase D: CV/SHAP/LIME/confusion/ablation figures + reports/validation_results.json
@@ -229,21 +261,13 @@ All scripts **auto-create** their folders (`data/`, `reports/`, `reports/figures
 - **Phase D** -> `reports/figures/D*.png`, `reports/validation_results.json`
 - **Phase E** -> `reports/rakuten_report.html` (figures embedded, shareable)
 
-### Start from the uploaded checkpoint (skip Phase 0 + A + B)
-This repo ships **`data/df_clean.csv.gz`** - the Phase A+B output (full 84,916 rows, already cleaned/merged/stemmed, with `text`, `text_nostem`, `y`, `prdtypecode`, `designation`, ids). A teammate can continue straight from Phase C without downloading raw data or re-running EDA/preprocessing:
-
-```python
-import pandas as pd
-df = pd.read_csv('data/df_clean.csv.gz')   # pandas reads gzip directly - no manual unzip
-```
-
-Or just run the later scripts (they already load this file):
+### Cleaned dataset checkpoint
+This repository does not include the cleaned dataset (`data/df_clean.csv`). Create it by running Phase 0 + A + B with your own copy of the challenge data. After that, you can run the later scripts on their own:
 ```bash
-python src/models/benchmark_all_models.py   # Phase C - reads data/df_clean.csv(.gz)
+python src/models/benchmark_all_models.py   # Phase C - reads data/df_clean.csv
 python src/models/validate_model.py          # Phase D
 python src/make_report.py                    # Phase E - HTML report
 ```
-To rebuild the checkpoint from scratch instead, delete it and run Phase 0 + A + B.
 
 ### Resume from checkpoints (skip expensive stages)
 The pipeline is checkpointed so you can start mid-way without redoing finished work:
